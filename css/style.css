@@ -500,8 +500,8 @@ body {
 /* Responsive */
 @media (max-width: 768px) {
     .nav-btn {
-        width: 38px;
-        height: 38px;
+        width: 18px;
+        height: 18px;
     }
     .nav-btn svg {
         width: 18px;
