@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "init-base": "node scripts/init_base_500.js",
     "generate": "node scripts/generate.js"
   },
   "dependencies": {
