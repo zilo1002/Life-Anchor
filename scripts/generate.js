@@ -2,10 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { GoogleGenAI } = require('@google/genai');
 
-// 初始化 API 客户端
 const ai = new GoogleGenAI();
-
-// 文件定位：从 scripts/ 向上跳一级找到根目录下的 data/quotes.json
 const JSON_PATH = path.join(__dirname, '../data/quotes.json');
 
 const PROMPT = `
@@ -34,27 +31,22 @@ async function generateDailyQuotes() {
     try {
         console.log('⏳ 正在调用 API 生成 30 条每日锚点内容...');
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
+            model: 'gemini-1.5-flash', // 已修正模型标识名称
             contents: PROMPT,
             config: {
                 responseMimeType: "application/json"
             }
         });
 
-        // 容错处理：剔除可能包含的 markdown 标记
         const rawText = response.text.replace(/```json/g, '').replace(/```/g, '').trim();
         const newQuotes = JSON.parse(rawText);
 
-        // 读取现有的 quotes.json
         let existingQuotes = [];
         if (fs.existsSync(JSON_PATH)) {
             const fileData = fs.readFileSync(JSON_PATH, 'utf-8');
             existingQuotes = JSON.parse(fileData);
-        } else {
-            console.warn('⚠️ 未找到 quotes.json，将新建文件...');
         }
 
-        // 统一编号处理
         const timestamp = Date.now();
         const formattedNewQuotes = newQuotes.map((item, index) => ({
             ...item,
@@ -63,13 +55,12 @@ async function generateDailyQuotes() {
 
         const updatedQuotes = [...existingQuotes, ...formattedNewQuotes];
 
-        // 写回 data/quotes.json
         fs.writeFileSync(JSON_PATH, JSON.stringify(updatedQuotes, null, 2), 'utf-8');
         console.log(`✅ 成功追加 ${formattedNewQuotes.length} 条新内容！当前数据库总计: ${updatedQuotes.length} 条。`);
 
     } catch (error) {
         console.error('❌ 生成失败:', error);
-        process.exit(1); // 抛出错误以使 GitHub Action 任务标记为 Failure
+        process.exit(1);
     }
 }
 
