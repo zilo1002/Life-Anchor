@@ -1,66 +1,155 @@
-// --- 1. 内容库与按需（懒加载）生成器 ---
-const baseQuotes = [
+// --- 1. 高维度结构化“锚点”数据库 ---
+// 严格区分：quote (真实引文), text (思想改写/反思), story (故事/思想实验), dialogue (短对话)
+const anchorDatabase = [
+    // 【迷茫 / 意义 / 提醒 / 真实引文 / 深层】
     {
-        zh: "在这片浩瀚的星空下，许多伟大的转折，最初都始于那些看似毫无波澜的平静日子。",
-        en: "Under this vast starry sky, many great transitions begin on seemingly quiet days.",
-        sourceZh: "生命的锚点",
-        sourceEn: "Anchor of Life"
+        id: "a001",
+        contentType: "quote", // 真实引文
+        themes: ["意义", "人生"],
+        emotions: ["迷茫时", "焦虑时"],
+        functions: ["提醒", "安定"],
+        depth: "深层",
+        zh: "知道为什么而活的人，便能生存于任何处境。",
+        en: "He who has a why to live can bear almost any how.",
+        sourceZh: "弗里德里希·尼采 《偶像的黄昏》",
+        sourceEn: "Friedrich Nietzsche, Twilight of the Idols",
+        school: "存在主义"
     },
+    // 【疲惫 / 自我 / 陪伴 / 思想改写 / 浅层】
     {
+        id: "a002",
+        contentType: "text", // 思想改写 / 思考
+        themes: ["自我", "人生"],
+        emotions: ["疲惫时", "难过时"],
+        functions: ["陪伴", "释然"],
+        depth: "浅层",
+        zh: "有些事情，急着想明白，反而更想不明白。",
+        en: "Some things only become clear when you stop forcing yourself to understand them.",
+        sourceZh: "关于慢下来的思考",
+        sourceEn: "Reflections on Slowing Down",
+        school: "心理学视角"
+    },
+    // 【迷茫 / 意义 / 启发 / 反常识观点 / 中层】
+    {
+        id: "a003",
+        contentType: "text",
+        themes: ["意义", "选择"],
+        emotions: ["迷茫时", "犹豫时"],
+        functions: ["启发", "反思"],
+        depth: "深层",
+        zh: "人并不总是在寻找客观答案。很多时候，我们真正想要的是一个能够让自己继续生活下去的解释。",
+        en: "People aren't always searching for absolute truth; often, we just need an explanation that gives us a reason to keep going.",
+        sourceZh: "关于意义建构的思考",
+        sourceEn: "Reflections on Meaning Making",
+        school: "现代哲学"
+    },
+    // 【孤独 / 自由 / 安定 / 真实引文 / 深层】
+    {
+        id: "a004",
+        contentType: "quote",
+        themes: ["孤独", "自由", "死亡"],
+        emotions: ["孤独时", "平静时"],
+        functions: ["安定", "陪伴"],
+        depth: "深层",
         zh: "人是被抛到这个世界上来的。如何面对这种状态，才是你真正的存在。",
         en: "Man is thrown into the world. How you face this state is your true existence.",
-        sourceZh: "萨特",
-        sourceEn: "Jean-Paul Sartre"
+        sourceZh: "让-保罗·萨特 《存在与虚无》",
+        sourceEn: "Jean-Paul Sartre, Being and Nothingness",
+        school: "存在主义"
+    },
+    // 【犹豫 / 行动 / 警醒 / 思想实验 / 中层】
+    {
+        id: "a005",
+        contentType: "story", // 思想实验
+        themes: ["选择", "时间", "命运"],
+        emotions: ["犹豫时", "想重新开始时"],
+        functions: ["警醒", "行动"],
+        depth: "中层",
+        titleZh: "【思想实验：拉普拉斯妖与选择】",
+        titleEn: "[Thought Experiment: Laplace's Demon]",
+        zh: "如果有一个智者知道宇宙这一刻所有粒子位置，就能推算出你未来所有的决定。但这不重要——在你做决定的这一刻，主观上的选择权依然完全在你手里。",
+        en: "Even if physical laws were predetermined, the conscious experience of choice in this moment remains uniquely yours to execute.",
+        sourceZh: "物理学与决定论思考",
+        sourceEn: "Reflections on Physics & Free Will",
+        school: "现代哲学"
+    },
+    // 【焦虑 / 欲望 / 释然 / 真实引文 / 中层】
+    {
+        id: "a006",
+        contentType: "quote",
+        themes: ["欲望", "平静"],
+        emotions: ["焦虑时", "疲惫时"],
+        functions: ["释然", "安定"],
+        depth: "中层",
+        zh: "我们感受到的痛苦，往往不是来自事物本身，而是来自我们对事物的判断。",
+        en: "You have power over your mind - not outside events. Realize this, and you will find strength.",
+        sourceZh: "马可·奥勒留 《沉思录》",
+        sourceEn: "Marcus Aurelius, Meditations",
+        school: "斯多葛主义"
+    },
+    // 【失意 / 失去 / 陪伴 / 短对话 / 浅层】
+    {
+        id: "a007",
+        contentType: "dialogue", // 短对话
+        themes: ["失去", "成长"],
+        emotions: ["失望时", "难过时"],
+        functions: ["陪伴", "释然"],
+        depth: "浅层",
+        zh: "“如果最后还是弄丢了怎么办？”\n“那就证明它只是你人生某一段路程的陪同者，而不是终点。”",
+        en: "\"What if I end up losing it anyway?\"\n\"Then it proves it was a companion for part of the journey, not the destination.\"",
+        sourceZh: "对白对话录",
+        sourceEn: "Short Dialogue",
+        school: "文学性思考"
+    },
+    // 【迷茫 / 欲望 / 警醒 / 真实引文 / 深层】
+    {
+        id: "a008",
+        contentType: "quote",
+        themes: ["欲望", "希望"],
+        emotions: ["焦虑时", "迷茫时"],
+        functions: ["警醒", "反思"],
+        depth: "深层",
+        zh: "满地都是六便士，他却抬头看到了月亮。",
+        en: "He was so busy looking at the moon that he did not see the sixpence at his feet.",
+        sourceZh: "威廉·萨默塞特·毛姆 《月亮与六便士》",
+        sourceEn: "W. Somerset Maugham, The Moon and Sixpence",
+        school: "文学性思考"
+    },
+    // 【想重新开始 / 时间 / 提醒 / 真实引文 / 浅层】
+    {
+        id: "a009",
+        contentType: "quote",
+        themes: ["时间", "成长"],
+        emotions: ["想重新开始时", "犹豫时"],
+        functions: ["提醒", "行动"],
+        depth: "浅层",
+        zh: "凡是过往，皆为序章。",
+        en: "What's past is prologue.",
+        sourceZh: "威廉·莎士比亚 《暴风雨》",
+        sourceEn: "William Shakespeare, The Tempest",
+        school: "文学性思考"
+    },
+    // 【平静 / 自我 / 安定 / 东方智慧 / 中层】
+    {
+        id: "a010",
+        contentType: "quote",
+        themes: ["自我", "平静"],
+        emotions: ["平静时", "疲惫时"],
+        functions: ["安定", "释然"],
+        depth: "中层",
+        zh: "天地有大美而不言，四时有明法而不议，万物有成理而不说。",
+        en: "The universe possesses great beauty without speaking; the four seasons follow eternal laws without debate.",
+        sourceZh: "庄子 《知北游》",
+        sourceEn: "Zhuangzi",
+        school: "道家"
     }
 ];
-
-// 已实例化的数据库，初始只有基础数据
-const quotesDatabase = [...baseQuotes];
-const generatedSet = new Set(baseQuotes.map(q => q.zh));
-
-const subjectsZh = ["时间", "灵魂", "沉寂", "微光", "宇宙", "命运", "风暴", "晨曦", "孤独", "羁绊"];
-const subjectsEn = ["Time", "The soul", "Silence", "A faint light", "The cosmos", "Destiny", "The storm", "Dawn", "Solitude", "Connection"];
-const actionsZh = ["穿透了漫长的黑夜", "重构着存在的定义", "悄然改变着轨迹", "在角落里静静绽放", "呼唤着未知的终点"];
-const actionsEn = ["pierces through the long night", "redefines existence", "quietly shifts our course", "blooms silently in the corner", "calls to an unknown horizon"];
-const insightsZh = ["带来属于未来的力量。", "让瞬间成为了永恒。", "照亮了前行的道路。", "赋予平淡以深刻的含义。", "是生命最真实的质感。"];
-const insightsEn = ["bringing strength for tomorrow.", "turning moments into eternity.", "illuminating the path ahead.", "giving profound meaning to the ordinary.", "revealing the true texture of life."];
-
-// 懒加载：按需单条生成，绝不阻塞主线程
-function getRandomQuote() {
-    // 概率性优先展示基础精选内容，或生成新内容
-    if (Math.random() < 0.2 && quotesDatabase.length <= baseQuotes.length) {
-        return quotesDatabase[Math.floor(Math.random() * baseQuotes.length)];
-    }
-
-    let zh, en;
-    let attempts = 0;
-    // 动态拼接生成
-    do {
-        const i = Math.floor(Math.random() * subjectsZh.length);
-        const j = Math.floor(Math.random() * actionsZh.length);
-        const k = Math.floor(Math.random() * insightsZh.length);
-
-        zh = `${subjectsZh[i]}${actionsZh[j]}，${insightsZh[k]}`;
-        en = `${subjectsEn[i]} ${actionsEn[j]}, ${insightsEn[k]}`;
-        attempts++;
-    } while (generatedSet.has(zh) && attempts < 50);
-
-    generatedSet.add(zh);
-    const item = {
-        zh,
-        en,
-        sourceZh: `思考片段 #${quotesDatabase.length + 1}`,
-        sourceEn: `Reflections #${quotesDatabase.length + 1}`
-    };
-    quotesDatabase.push(item);
-    return item;
-}
 
 // --- 2. 应用核心逻辑 ---
 let currentIndex = -1;
 let historyStack = [];
 let historyPointer = -1;
-let cardBilingualMode = 'zh-en'; // 'zh', 'en', 'zh-en'
+let cardBilingualMode = 'zh-en'; 
 let touchStartX = 0;
 let touchEndX = 0;
 
@@ -103,43 +192,72 @@ function applyUILanguage() {
     });
 }
 
-function renderCard(cardData) {
+// 格式化不同内容类型的标签展示（真实引文 vs 思想思考 vs 故事对话）
+function getTypeBadge(type) {
+    switch (type) {
+        case 'quote': return '<span class="badge badge-quote">真实引文</span>';
+        case 'story': return '<span class="badge badge-story">思想实验/故事</span>';
+        case 'dialogue': return '<span class="badge badge-dialogue">短对话</span>';
+        case 'text': default: return '<span class="badge badge-text">思想反思</span>';
+    }
+}
+
+function renderCard(item) {
     const messageCard = document.getElementById('messageCard');
     const contentBox = messageCard.querySelector('.card-content');
 
     contentBox.innerHTML = '';
 
+    // 构建元数据标签栏 (功能标签 + 情绪状态 + 内容类型)
+    const tagsHtml = `
+        <div class="card-tags-header">
+            ${getTypeBadge(item.contentType)}
+            <span class="tag-item function-tag">【${item.functions[0]}】</span>
+            <span class="tag-item emotion-tag">${item.emotions[0]}</span>
+            <span class="tag-item depth-tag">${item.depth}</span>
+        </div>
+    `;
+
+    let bodyHtml = '';
+    const isDialogue = item.contentType === 'dialogue';
+    const textStyleClass = isDialogue ? 'dialogue-style' : '';
+
     if (cardBilingualMode === 'zh') {
-        contentBox.innerHTML = `
-            <p class="main-message">${cardData.zh}</p>
-            <span class="source">— ${cardData.sourceZh}</span>
+        bodyHtml = `
+            ${item.titleZh ? `<h4 class="card-title">${item.titleZh}</h4>` : ''}
+            <p class="main-message ${textStyleClass}">${item.zh.replace(/\n/g, '<br>')}</p>
+            <span class="source">— ${item.sourceZh} (${item.school})</span>
         `;
     } else if (cardBilingualMode === 'en') {
-        contentBox.innerHTML = `
-            <p class="main-message">${cardData.en}</p>
-            <span class="source">— ${cardData.sourceEn}</span>
+        bodyHtml = `
+            ${item.titleEn ? `<h4 class="card-title">${item.titleEn}</h4>` : ''}
+            <p class="main-message ${textStyleClass}">${item.en.replace(/\n/g, '<br>')}</p>
+            <span class="source">— ${item.sourceEn} (${item.school})</span>
         `;
     } else {
-        contentBox.innerHTML = `
+        bodyHtml = `
             <div class="bilingual-wrapper">
-                <p class="main-message zh">${cardData.zh}</p>
-                <p class="main-message en">${cardData.en}</p>
+                ${item.titleZh ? `<h4 class="card-title">${item.titleZh} / ${item.titleEn}</h4>` : ''}
+                <p class="main-message zh ${textStyleClass}">${item.zh.replace(/\n/g, '<br>')}</p>
+                <p class="main-message en ${textStyleClass}">${item.en.replace(/\n/g, '<br>')}</p>
             </div>
-            <span class="source">— ${cardData.sourceZh} / ${cardData.sourceEn}</span>
+            <span class="source">— ${item.sourceZh} / ${item.sourceEn} (${item.school})</span>
         `;
     }
 
+    contentBox.innerHTML = tagsHtml + bodyHtml;
     messageCard.classList.add('visible');
     updateNavButtonsState();
 }
 
 function drawRandomCard() {
-    const item = getRandomQuote();
-    
+    const randomIndex = Math.floor(Math.random() * anchorDatabase.length);
+    const item = anchorDatabase[randomIndex];
+
     if (historyPointer < historyStack.length - 1) {
         historyStack = historyStack.slice(0, historyPointer + 1);
     }
-    
+
     historyStack.push(item);
     historyPointer = historyStack.length - 1;
     renderCard(item);
@@ -176,7 +294,7 @@ function cycleCardLanguageMode() {
     }
 }
 
-// 触摸滑动手势
+// 触摸手势
 function setupTouchEvents() {
     const card = document.getElementById('messageCard');
     if (!card) return;
