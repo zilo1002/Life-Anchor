@@ -1,4 +1,4 @@
-// --- 1. 海量随机原创内容库 (5000+条生成逻辑) ---
+// --- 1. 内容库与按需（懒加载）生成器 ---
 const baseQuotes = [
     {
         zh: "在这片浩瀚的星空下，许多伟大的转折，最初都始于那些看似毫无波澜的平静日子。",
@@ -14,41 +14,47 @@ const baseQuotes = [
     }
 ];
 
-function generate5000Quotes() {
-    const subjectsZh = ["时间", "灵魂", "沉寂", "微光", "宇宙", "命运", "风暴", "晨曦", "孤独", "羁绊"];
-    const subjectsEn = ["Time", "The soul", "Silence", "A faint light", "The cosmos", "Destiny", "The storm", "Dawn", "Solitude", "Connection"];
+// 已实例化的数据库，初始只有基础数据
+const quotesDatabase = [...baseQuotes];
+const generatedSet = new Set(baseQuotes.map(q => q.zh));
 
-    const actionsZh = ["穿透了漫长的黑夜", "重构着存在的定义", "悄然改变着轨迹", "在角落里静静绽放", "呼唤着未知的终点"];
-    const actionsEn = ["pierces through the long night", "redefines existence", "quietly shifts our course", "blooms silently in the corner", "calls to an unknown horizon"];
+const subjectsZh = ["时间", "灵魂", "沉寂", "微光", "宇宙", "命运", "风暴", "晨曦", "孤独", "羁绊"];
+const subjectsEn = ["Time", "The soul", "Silence", "A faint light", "The cosmos", "Destiny", "The storm", "Dawn", "Solitude", "Connection"];
+const actionsZh = ["穿透了漫长的黑夜", "重构着存在的定义", "悄然改变着轨迹", "在角落里静静绽放", "呼唤着未知的终点"];
+const actionsEn = ["pierces through the long night", "redefines existence", "quietly shifts our course", "blooms silently in the corner", "calls to an unknown horizon"];
+const insightsZh = ["带来属于未来的力量。", "让瞬间成为了永恒。", "照亮了前行的道路。", "赋予平淡以深刻的含义。", "是生命最真实的质感。"];
+const insightsEn = ["bringing strength for tomorrow.", "turning moments into eternity.", "illuminating the path ahead.", "giving profound meaning to the ordinary.", "revealing the true texture of life."];
 
-    const insightsZh = ["带来属于未来的力量。", "让瞬间成为了永恒。", "照亮了前行的道路。", "赋予平淡以深刻的含义。", "是生命最真实的质感。"];
-    const insightsEn = ["bringing strength for tomorrow.", "turning moments into eternity.", "illuminating the path ahead.", "giving profound meaning to the ordinary.", "revealing the true texture of life."];
+// 懒加载：按需单条生成，绝不阻塞主线程
+function getRandomQuote() {
+    // 概率性优先展示基础精选内容，或生成新内容
+    if (Math.random() < 0.2 && quotesDatabase.length <= baseQuotes.length) {
+        return quotesDatabase[Math.floor(Math.random() * baseQuotes.length)];
+    }
 
-    const generated = [];
-    const usedSet = new Set();
-
-    while (generated.length < 5000) {
+    let zh, en;
+    let attempts = 0;
+    // 动态拼接生成
+    do {
         const i = Math.floor(Math.random() * subjectsZh.length);
         const j = Math.floor(Math.random() * actionsZh.length);
         const k = Math.floor(Math.random() * insightsZh.length);
 
-        const zh = `${subjectsZh[i]}${actionsZh[j]}，${insightsZh[k]}`;
-        const en = `${subjectsEn[i]} ${actionsEn[j]}, ${insightsEn[k]}`;
+        zh = `${subjectsZh[i]}${actionsZh[j]}，${insightsZh[k]}`;
+        en = `${subjectsEn[i]} ${actionsEn[j]}, ${insightsEn[k]}`;
+        attempts++;
+    } while (generatedSet.has(zh) && attempts < 50);
 
-        if (!usedSet.has(zh)) {
-            usedSet.add(zh);
-            generated.push({
-                zh,
-                en,
-                sourceZh: `思考片段 #${generated.length + 1}`,
-                sourceEn: `Reflections #${generated.length + 1}`
-            });
-        }
-    }
-    return generated;
+    generatedSet.add(zh);
+    const item = {
+        zh,
+        en,
+        sourceZh: `思考片段 #${quotesDatabase.length + 1}`,
+        sourceEn: `Reflections #${quotesDatabase.length + 1}`
+    };
+    quotesDatabase.push(item);
+    return item;
 }
-
-const quotesDatabase = [...baseQuotes, ...generate5000Quotes()];
 
 // --- 2. 应用核心逻辑 ---
 let currentIndex = -1;
@@ -82,7 +88,6 @@ const uiTranslations = {
     }
 };
 
-// 自动匹配浏览器/系统首选语言
 function getSystemLanguage() {
     const lang = navigator.language || navigator.userLanguage;
     return lang.startsWith('zh') ? 'zh' : 'en';
@@ -98,10 +103,7 @@ function applyUILanguage() {
     });
 }
 
-function showCardAtIndex(index) {
-    if (index < 0 || index >= quotesDatabase.length) return;
-
-    const cardData = quotesDatabase[index];
+function renderCard(cardData) {
     const messageCard = document.getElementById('messageCard');
     const contentBox = messageCard.querySelector('.card-content');
 
@@ -132,29 +134,28 @@ function showCardAtIndex(index) {
 }
 
 function drawRandomCard() {
-    const randomIndex = Math.floor(Math.random() * quotesDatabase.length);
+    const item = getRandomQuote();
+    
     if (historyPointer < historyStack.length - 1) {
         historyStack = historyStack.slice(0, historyPointer + 1);
     }
-    historyStack.push(randomIndex);
+    
+    historyStack.push(item);
     historyPointer = historyStack.length - 1;
-    currentIndex = randomIndex;
-    showCardAtIndex(currentIndex);
+    renderCard(item);
 }
 
 function showPrevCard() {
     if (historyPointer > 0) {
         historyPointer--;
-        currentIndex = historyStack[historyPointer];
-        showCardAtIndex(currentIndex);
+        renderCard(historyStack[historyPointer]);
     }
 }
 
 function showNextCard() {
     if (historyPointer < historyStack.length - 1) {
         historyPointer++;
-        currentIndex = historyStack[historyPointer];
-        showCardAtIndex(currentIndex);
+        renderCard(historyStack[historyPointer]);
     } else {
         drawRandomCard();
     }
@@ -170,12 +171,12 @@ function cycleCardLanguageMode() {
     else if (cardBilingualMode === 'zh') cardBilingualMode = 'en';
     else cardBilingualMode = 'zh-en';
 
-    if (currentIndex !== -1) {
-        showCardAtIndex(currentIndex);
+    if (historyPointer >= 0 && historyStack[historyPointer]) {
+        renderCard(historyStack[historyPointer]);
     }
 }
 
-// 触摸滑动手势支持
+// 触摸滑动手势
 function setupTouchEvents() {
     const card = document.getElementById('messageCard');
     if (!card) return;
@@ -214,7 +215,6 @@ document.addEventListener('DOMContentLoaded', () => {
         cycleCardLanguageMode();
     });
 
-    // 点击背景空白区域关闭卡片
     document.addEventListener('click', (e) => {
         const card = document.getElementById('messageCard');
         const mainBtn = document.getElementById('mainAnchorBtn');
@@ -223,7 +223,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 暗黑模式切换
     const themeToggle = document.getElementById('themeToggle');
     themeToggle?.addEventListener('click', () => {
         const isDark = document.body.getAttribute('data-theme') === 'dark';
