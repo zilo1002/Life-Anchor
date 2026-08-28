@@ -401,8 +401,8 @@ body {
     position: fixed;
     top: 50%;
     transform: translateY(-50%);
-    width: 48px;
-    height: 48px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     border: 2px solid var(--primary);
     background: var(--background);
@@ -413,8 +413,16 @@ body {
     opacity: 0;
     pointer-events: none;
     transition: all 0.3s ease;
-    z-index: 101;
+    z-index: 105;
     box-shadow: 0 4px 20px var(--glow);
+}
+
+.nav-prev {
+    left: 20px;
+}
+
+.nav-next {
+    right: 20px;
 }
 
 .nav-btn.visible {
@@ -436,35 +444,10 @@ body {
 }
 
 .nav-btn svg {
-    width: 24px;
-    height: 24px;
+    width: 22px;
+    height: 22px;
     fill: var(--primary);
     transition: fill 0.3s ease;
-}
-
-.nav-prev {
-    left: calc(50% - min(45vw, 280px) - 40px);
-}
-
-.nav-next {
-    right: calc(50% - min(45vw, 280px) - 40px);
-}
-
-@media (max-width: 768px) {
-    .nav-btn {
-        width: 40px;
-        height: 40px;
-    }
-    .nav-btn svg {
-        width: 20px;
-        height: 20px;
-    }
-    .nav-prev {
-        left: calc(50% - min(48vw, 320px) - 35px);
-    }
-    .nav-next {
-        right: calc(50% - min(48vw, 320px) - 35px);
-    }
 }
 
 /* Particles */
@@ -515,6 +498,23 @@ body {
 }
 
 /* Responsive */
+@media (max-width: 768px) {
+    .nav-btn {
+        width: 38px;
+        height: 38px;
+    }
+    .nav-btn svg {
+        width: 18px;
+        height: 18px;
+    }
+    .nav-prev {
+        left: 10px;
+    }
+    .nav-next {
+        right: 10px;
+    }
+}
+
 @media (max-width: 480px) {
     .theme-toggle { top: 16px; right: 16px; }
     .sound-selector { top: 16px; left: 16px; }
