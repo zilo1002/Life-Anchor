@@ -3,75 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>活下去的理由 - Life Anchor</title>
-    <!-- Fonts -->
+    <title>生命的锚点 | Anchor of Life</title>
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=Noto+Sans+SC:wght@300;400;500&family=Noto+Serif+SC:wght@600;700&display=swap" rel="stylesheet">
-    <!-- Favicon -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='10' y='30' width='80' height='40' rx='20' fill='%238B7355'/><rect x='20' y='40' width='60' height='20' rx='10' fill='%23FAF7F2'/></svg>">
-    <!-- Styles -->
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Noto+Sans+SC:wght@300;400;500&family=Noto+Serif+SC:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+
+    <!-- Theme Toggle -->
+    <button class="theme-toggle" id="themeToggle" title="切换主题">
+        <svg class="sun-icon" viewBox="0 0 24 24"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"/></svg>
+        <svg class="moon-icon" viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 4.97 0 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/></svg>
+    </button>
+
+    <!-- Sound Selector -->
+    <div class="sound-selector">
+        <button class="sound-btn" id="soundBtn">
+            <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+            <span id="soundText" data-i18n="soundText">Water Drop</span>
+        </button>
+        <div class="sound-menu" id="soundMenu">
+            <button class="sound-option active" data-sound="water">Water Drop</button>
+            <button class="sound-option" data-sound="wind">Wind Chime</button>
+            <button class="sound-option" data-sound="bowl">Singing Bowl</button>
+            <button class="sound-option" data-sound="none">Mute</button>
+        </div>
+    </div>
+
+    <!-- Background Glow -->
     <div class="background-glow">
         <div class="glow-orb"></div>
         <div class="glow-orb"></div>
         <div class="glow-orb"></div>
     </div>
 
-    <!-- Sound Selector -->
-    <div class="sound-selector">
-        <button class="sound-btn" id="soundBtn">
-            <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.252.5-4.02z"/></svg>
-            <span id="soundLabel">水滴声</span>
-        </button>
-        <div class="sound-menu" id="soundMenu">
-            <button class="sound-option active" data-sound="water" data-i18n="soundWater">水滴声</button>
-            <button class="sound-option" data-sound="click" data-i18n="soundClick">轻柔点击</button>
-            <button class="sound-option" data-sound="mechanical-red" data-i18n="soundRed">机械红轴</button>
-            <button class="sound-option" data-sound="mechanical-blue" data-i18n="soundBlue">机械青轴</button>
-            <button class="sound-option" data-sound="mechanical-brown" data-i18n="soundBrown">机械茶轴</button>
-            <button class="sound-option" data-sound="mechanical-silent" data-i18n="soundSilent">静音红轴</button>
-            <button class="sound-option" data-sound="bell" data-i18n="soundBell">风铃</button>
-        </div>
-    </div>
-
-    <!-- Theme Toggle -->
-    <button class="theme-toggle" id="themeToggle" aria-label="切换主题">
-        <svg class="sun-icon" viewBox="0 0 24 24"><path d="M12 7a5 5 0 1 0 5 5 0 0 0 0-10zM12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 1.42 1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-        <svg class="moon-icon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-    </button>
-
-    <div class="particles-container" id="particlesContainer"></div>
-    <div class="flash-overlay" id="flashOverlay"></div>
-
+    <!-- Main Content -->
     <main class="main-content">
-        <h1 class="title"><span data-i18n="title">活下去的理由</span><span class="title-decoration">Life Anchor</span></h1>
-        <button class="anchor-button" id="anchorButton" aria-label="Anchor Button">
-            <svg class="icon" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"/></svg>
+        <h1 class="title">
+            <span data-i18n="title">生命的锚点</span>
+            <span class="title-decoration" data-i18n="subtitle">Anchor of Life</span>
+        </h1>
+        <button class="anchor-button" id="mainAnchorBtn">
+            <svg class="icon" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="6"/>
+            </svg>
         </button>
     </main>
 
+    <!-- Message Card -->
     <div class="message-card" id="messageCard">
-        <p class="main-message" id="mainMessage"></p>
-        <p class="source" id="storySource"></p>
-        <span class="close-hint" data-i18n="closeHint">点击任意处关闭</span>
+        <div class="card-content"></div>
+        
+        <!-- 卡片控制栏 -->
+        <div class="card-footer-controls">
+            <button id="cardLangToggle" class="card-control-btn" title="切换显示语言">
+                🌐 <span data-i18n="langSwitchBtn">中英</span>
+            </button>
+            <div class="card-nav-group">
+                <button id="cardNavPrev" class="card-nav-btn">
+                    ← <span data-i18n="prevBtn">上一条</span>
+                </button>
+                <button id="cardNavNext" class="card-nav-btn">
+                    <span data-i18n="nextBtn">下一条</span> →
+                </button>
+            </div>
+        </div>
+
+        <span class="close-hint" data-i18n="closeHint">Click anywhere to close</span>
     </div>
 
-    <!-- Navigation Buttons -->
-    <button class="nav-btn nav-prev" id="navPrev" aria-label="Previous">
-        <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
-    </button>
-    <button class="nav-btn nav-next" id="navNext" aria-label="Next">
-        <svg viewBox="0 0 24 24"><path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/></svg>
-    </button>
+    <!-- Flash Overlay & Particles -->
+    <div class="flash-overlay" id="flashOverlay"></div>
+    <div class="particles-container" id="particlesContainer"></div>
 
-    <footer class="footer-quote" data-i18n="footerQuote">人是被抛入世界的。但如何面对被抛入的状态，才是你真正的存在。</footer>
+    <footer class="footer-quote" data-i18n="footerQuote">
+        Man is thrown into the world. How you face this state is your true existence.
+    </footer>
 
-    <!-- Scripts -->
-    <script src="data/i18n.js"></script>
-    <script src="data/messages.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>
