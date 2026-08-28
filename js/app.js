@@ -4,48 +4,34 @@ const state = {
     isAnimating: false,
     currentSound: localStorage.getItem('sound') || 'water',
     currentIndex: 0,
-    cardLanguage: localStorage.getItem('cardLanguage') || 'zh',
     contentPool: [],
     touchStartX: 0,
-    touchEndX: 0
+    touchEndX: 0,
+    lang: getLanguage()
 };
 
-// 安全兜底文案（防止 data/messages.js 加载失败导致代码崩溃）
-const fallbackStories = [
-    {
-        story: "万物皆有裂痕，那是光照进来的地方。",
-        source: "— 莱昂纳德·科恩",
-        storyEn: "There is a crack in everything, that's how the light gets in.",
-        sourceEn: "— Leonard Cohen"
-    },
-    {
-        story: "生活明朗，万物可爱，人间值得，未来可期。",
-        source: "— 季羡林",
-        storyEn: "Life is bright, all things are lovely, human world is worth living, and the future is promising.",
-        sourceEn: "— Ji Xianlin"
-    },
-    {
-        story: "凡是过往，皆为序章。",
-        source: "— 莎士比亚",
-        storyEn: "What's past is prologue.",
-        sourceEn: "— William Shakespeare"
-    }
-];
+// UI i18n Translation
+function applyTranslations() {
+    const dict = i18n[state.lang] || i18n.zh;
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.dataset.i18n;
+        if (dict[key]) {
+            el.textContent = dict[key];
+        }
+    });
+}
 
 // Audio Context
 let audioCtx = null;
 function getAudioCtx() {
-    if (!audioCtx) {
-        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-        if (AudioContextClass) audioCtx = new AudioContextClass();
-    }
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     return audioCtx;
 }
 
 // Sound Generators
 const sounds = {
     water: () => {
-        const ctx = getAudioCtx(); if (!ctx) return;
+        const ctx = getAudioCtx();
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         const filter = ctx.createBiquadFilter();
@@ -65,7 +51,7 @@ const sounds = {
         osc.start(); osc.stop(ctx.currentTime + 0.2);
     },
     click: () => {
-        const ctx = getAudioCtx(); if (!ctx) return;
+        const ctx = getAudioCtx();
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
 
@@ -81,7 +67,7 @@ const sounds = {
         osc.start(); osc.stop(ctx.currentTime + 0.12);
     },
     'mechanical-red': () => {
-        const ctx = getAudioCtx(); if (!ctx) return;
+        const ctx = getAudioCtx();
         const noise = ctx.createBufferSource();
         const buffer = ctx.createBuffer(1, ctx.sampleRate * 0.08, ctx.sampleRate);
         const data = buffer.getChannelData(0);
@@ -100,7 +86,7 @@ const sounds = {
         noise.start();
     },
     'mechanical-blue': () => {
-        const ctx = getAudioCtx(); if (!ctx) return;
+        const ctx = getAudioCtx();
         const click = ctx.createOscillator();
         const clickGain = ctx.createGain();
         click.type = 'square';
@@ -123,7 +109,7 @@ const sounds = {
         bottom.start(ctx.currentTime + 0.02); bottom.stop(ctx.currentTime + 0.1);
     },
     'mechanical-brown': () => {
-        const ctx = getAudioCtx(); if (!ctx) return;
+        const ctx = getAudioCtx();
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         const noise = ctx.createBufferSource();
@@ -151,7 +137,7 @@ const sounds = {
         noise.start(); osc.start(); osc.stop(ctx.currentTime + 0.06);
     },
     'mechanical-silent': () => {
-        const ctx = getAudioCtx(); if (!ctx) return;
+        const ctx = getAudioCtx();
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
 
@@ -167,7 +153,7 @@ const sounds = {
         osc.start(); osc.stop(ctx.currentTime + 0.05);
     },
     bell: () => {
-        const ctx = getAudioCtx(); if (!ctx) return;
+        const ctx = getAudioCtx();
         const frequencies = [1046.5, 1318.5, 1568, 2093];
         frequencies.forEach((freq, i) => {
             const osc = ctx.createOscillator();
@@ -184,23 +170,13 @@ const sounds = {
     }
 };
 
-const soundNames = {
-    water: '水滴声',
-    click: '轻柔点击',
-    'mechanical-red': '机械红轴',
-    'mechanical-blue': '机械青轴',
-    'mechanical-brown': '机械茶轴',
-    'mechanical-silent': '静音红轴',
-    bell: '风铃'
-};
-
 function playSound() {
     try { sounds[state.currentSound]?.(); } catch (e) {}
 }
 
 function playSuccessChime() {
     try {
-        const ctx = getAudioCtx(); if (!ctx) return;
+        const ctx = getAudioCtx();
         const notes = [523.25, 659.25, 783.99];
         notes.forEach((freq, i) => {
             const osc = ctx.createOscillator();
@@ -217,87 +193,60 @@ function playSuccessChime() {
     } catch (e) {}
 }
 
-// 安全调用外部 i18n
-if (window.LifeAnchorI18n && typeof LifeAnchorI18n.apply === 'function') {
-    LifeAnchorI18n.apply();
-}
-
-// 获取 DOM 节点
+// DOM Elements
 const themeToggle = document.getElementById('themeToggle');
 const anchorButton = document.getElementById('anchorButton');
 const flashOverlay = document.getElementById('flashOverlay');
 const messageCard = document.getElementById('messageCard');
 const mainMessage = document.getElementById('mainMessage');
 const storySource = document.getElementById('storySource');
-const cardLanguageSelector = document.getElementById('cardLanguageSelector');
-const cardLanguageOptions = document.querySelectorAll('.card-language-option');
-const messageNav = document.getElementById('messageNav');
-const prevBtn = document.getElementById('prevBtn');
-const nextBtn = document.getElementById('nextBtn');
 const particlesContainer = document.getElementById('particlesContainer');
 const soundBtn = document.getElementById('soundBtn');
 const soundMenu = document.getElementById('soundMenu');
 const soundLabel = document.getElementById('soundLabel');
+const navPrev = document.getElementById('navPrev');
+const navNext = document.getElementById('navNext');
 
 function initTheme() {
     document.documentElement.setAttribute('data-theme', state.theme);
 }
 
 function initSound() {
-    if (soundLabel) soundLabel.textContent = soundNames[state.currentSound];
+    const activeOpt = document.querySelector(`.sound-option[data-sound="${state.currentSound}"]`);
+    if (activeOpt) soundLabel.textContent = activeOpt.textContent;
     document.querySelectorAll('.sound-option').forEach(opt => {
         opt.classList.toggle('active', opt.dataset.sound === state.currentSound);
     });
 }
 
-// 绑定导航按键事件
-if (prevBtn) {
-    prevBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        navigateContent('prev');
-    });
-}
-if (nextBtn) {
-    nextBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        navigateContent('next');
-    });
-}
+// Event Listeners
+themeToggle.addEventListener('click', () => {
+    state.theme = state.theme === 'light' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', state.theme);
+    localStorage.setItem('theme', state.theme);
+});
 
-if (themeToggle) {
-    themeToggle.addEventListener('click', () => {
-        state.theme = state.theme === 'light' ? 'dark' : 'light';
-        document.documentElement.setAttribute('data-theme', state.theme);
-        localStorage.setItem('theme', state.theme);
-    });
-}
-
-if (soundBtn) {
-    soundBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (soundMenu) soundMenu.classList.toggle('show');
-    });
-}
+soundBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    soundMenu.classList.toggle('show');
+});
 
 document.querySelectorAll('.sound-option').forEach(opt => {
     opt.addEventListener('click', () => {
         state.currentSound = opt.dataset.sound;
-        if (soundLabel) soundLabel.textContent = soundNames[state.currentSound];
+        soundLabel.textContent = opt.textContent;
         localStorage.setItem('sound', state.currentSound);
         document.querySelectorAll('.sound-option').forEach(o => o.classList.remove('active'));
         opt.classList.add('active');
-        if (soundMenu) soundMenu.classList.remove('show');
+        soundMenu.classList.remove('show');
         playSound();
     });
 });
 
-document.addEventListener('click', () => {
-    if (soundMenu) soundMenu.classList.remove('show');
-});
+document.addEventListener('click', () => soundMenu.classList.remove('show'));
 
 function createRipple(e) {
     const btn = e.currentTarget;
-    if (!btn) return;
     const rect = btn.getBoundingClientRect();
     const ripple = document.createElement('span');
     ripple.className = 'ripple';
@@ -308,7 +257,6 @@ function createRipple(e) {
 }
 
 function createParticles() {
-    if (!particlesContainer) return;
     particlesContainer.innerHTML = '';
     for (let i = 0; i < 18; i++) {
         const p = document.createElement('div');
@@ -328,12 +276,7 @@ function createParticles() {
 }
 
 function prepareContentPool() {
-    // 优先读取 LifeAnchorContent 数据，若无则使用 fallbackStories
-    const rawData = (window.LifeAnchorContent && Array.isArray(window.LifeAnchorContent.philosophicalStories) && window.LifeAnchorContent.philosophicalStories.length > 0)
-        ? window.LifeAnchorContent.philosophicalStories
-        : fallbackStories;
-
-    state.contentPool = [...rawData];
+    state.contentPool = [...philosophicalStories];
     for (let i = state.contentPool.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [state.contentPool[i], state.contentPool[j]] = [state.contentPool[j], state.contentPool[i]];
@@ -342,81 +285,20 @@ function prepareContentPool() {
 }
 
 function showCurrentContent() {
-    if (!state.contentPool.length) return;
     const content = state.contentPool[state.currentIndex];
-    const hasEnglish = Boolean(content.storyEn);
-
-    if (mainMessage) mainMessage.textContent = content.story || '';
-    if (storySource) storySource.textContent = content.source || '';
-
-    let englishMessage = document.getElementById('mainMessageEn');
-    let englishSource = document.getElementById('storySourceEn');
-
-    if (!englishMessage && mainMessage) {
-        englishMessage = document.createElement('p');
-        englishMessage.className = 'main-message main-message-en';
-        englishMessage.id = 'mainMessageEn';
-        mainMessage.insertAdjacentElement('afterend', englishMessage);
-    }
-
-    if (!englishSource && storySource) {
-        englishSource = document.createElement('p');
-        englishSource.className = 'source source-en';
-        englishSource.id = 'storySourceEn';
-        storySource.insertAdjacentElement('afterend', englishSource);
-    }
-
-    if (englishMessage) englishMessage.textContent = content.storyEn || '';
-    if (englishSource) englishSource.textContent = content.sourceEn || '';
-
-    const mode = state.cardLanguage;
-    const showZh = mode === 'zh' || mode === 'bilingual';
-    const showEn = mode === 'en' || mode === 'bilingual';
-
-    if (mainMessage) mainMessage.style.display = showZh ? '' : 'none';
-    if (storySource) storySource.style.display = showZh ? '' : 'none';
-    if (englishMessage) englishMessage.style.display = showEn && hasEnglish ? '' : 'none';
-    if (englishSource) englishSource.style.display = showEn && hasEnglish && content.sourceEn ? '' : 'none';
-
-    if (mode === 'en' && !hasEnglish) {
-        if (mainMessage) {
-            mainMessage.style.display = '';
-            mainMessage.textContent = content.story;
-        }
-        if (storySource) {
-            storySource.style.display = '';
-            storySource.textContent = content.source;
-        }
-    }
+    mainMessage.textContent = content.story;
+    storySource.textContent = content.source;
 }
-
-function setCardLanguage(language) {
-    state.cardLanguage = language;
-    localStorage.setItem('cardLanguage', language);
-    cardLanguageOptions.forEach(option => {
-        option.classList.toggle('active', option.dataset.cardLanguage === language);
-    });
-    showCurrentContent();
-}
-
-cardLanguageOptions.forEach(option => {
-    option.addEventListener('click', (event) => {
-        event.stopPropagation();
-        setCardLanguage(option.dataset.cardLanguage);
-    });
-});
 
 function navigateContent(direction) {
     if (state.isAnimating) return;
     state.isAnimating = true;
 
-    if (messageCard) messageCard.classList.remove('visible');
-    if (cardLanguageSelector) cardLanguageSelector.classList.remove('visible');
-    if (messageNav) messageNav.classList.remove('visible');
-
-    if (messageCard) {
-        if (direction === 'prev') messageCard.classList.add('slide-left');
-        else messageCard.classList.add('slide-right');
+    messageCard.classList.remove('visible');
+    if (direction === 'prev') {
+        messageCard.classList.add('slide-left');
+    } else {
+        messageCard.classList.add('slide-right');
     }
 
     playSound();
@@ -429,12 +311,8 @@ function navigateContent(direction) {
         }
 
         showCurrentContent();
-        if (messageCard) {
-            messageCard.classList.remove('slide-left', 'slide-right');
-            messageCard.classList.add('visible');
-        }
-        if (cardLanguageSelector) cardLanguageSelector.classList.add('visible');
-        if (messageNav) messageNav.classList.add('visible');
+        messageCard.classList.remove('slide-left', 'slide-right');
+        messageCard.classList.add('visible');
         state.isAnimating = false;
     }, 300);
 }
@@ -445,7 +323,7 @@ function activateButton(e) {
 
     createRipple(e);
     playSound();
-    if (flashOverlay) flashOverlay.classList.add('active');
+    flashOverlay.classList.add('active');
     createParticles();
 
     if (!state.activated) {
@@ -456,34 +334,38 @@ function activateButton(e) {
     setTimeout(playSuccessChime, 400);
 
     setTimeout(() => {
-        if (flashOverlay) flashOverlay.classList.remove('active');
-        if (messageCard) messageCard.classList.add('visible');
-        if (cardLanguageSelector) cardLanguageSelector.classList.add('visible');
-        if (messageNav) messageNav.classList.add('visible');
+        flashOverlay.classList.remove('active');
+        messageCard.classList.add('visible');
+        navPrev.classList.add('visible');
+        navNext.classList.add('visible');
         state.activated = true;
         state.isAnimating = false;
     }, 600);
 }
 
 function closeMessage(e) {
-    if (e.target.closest('#messageCard') || e.target.closest('#cardLanguageSelector') || e.target.closest('#messageNav')) return;
-
-    if (messageCard && messageCard.classList.contains('visible')) {
+    if (e.target === messageCard || messageCard.contains(e.target) || e.target === navPrev || e.target === navNext || navPrev.contains(e.target) || navNext.contains(e.target)) return;
+    if (messageCard.classList.contains('visible')) {
         messageCard.classList.remove('visible');
-        if (cardLanguageSelector) cardLanguageSelector.classList.remove('visible');
-        if (messageNav) messageNav.classList.remove('visible');
+        navPrev.classList.remove('visible');
+        navNext.classList.remove('visible');
         setTimeout(() => {
-            if (particlesContainer) particlesContainer.classList.remove('particles-active');
+            particlesContainer.classList.remove('particles-active');
             state.activated = false;
         }, 400);
     }
 }
 
-// Touch & Key Event Listeners
+// Event Binding
+anchorButton.addEventListener('click', activateButton);
+document.addEventListener('click', closeMessage);
+navPrev.addEventListener('click', (e) => { e.stopPropagation(); navigateContent('prev'); });
+navNext.addEventListener('click', (e) => { e.stopPropagation(); navigateContent('next'); });
+
 document.addEventListener('touchstart', (e) => { state.touchStartX = e.changedTouches[0].screenX; }, { passive: true });
 document.addEventListener('touchend', (e) => {
     state.touchEndX = e.changedTouches[0].screenX;
-    if (!messageCard || !messageCard.classList.contains('visible')) return;
+    if (!messageCard.classList.contains('visible')) return;
     const diff = state.touchStartX - state.touchEndX;
     if (Math.abs(diff) > 50) {
         if (diff > 0) navigateContent('next');
@@ -492,26 +374,13 @@ document.addEventListener('touchend', (e) => {
 }, { passive: true });
 
 document.addEventListener('keydown', (e) => {
-    if (!messageCard || !messageCard.classList.contains('visible')) return;
+    if (!messageCard.classList.contains('visible')) return;
     if (e.key === 'ArrowLeft') { e.preventDefault(); navigateContent('prev'); }
     else if (e.key === 'ArrowRight') { e.preventDefault(); navigateContent('next'); }
     else if (e.key === 'Escape') { closeMessage({ target: document.body }); }
 });
 
-if (anchorButton) {
-    anchorButton.addEventListener('click', activateButton);
-}
-document.addEventListener('click', closeMessage);
-
-// Init
+// App Initialization
+applyTranslations();
 initTheme();
-setCardLanguage(state.cardLanguage);
 initSound();
-
-document.addEventListener('DOMContentLoaded', () => {
-    document.body.style.opacity = '0';
-    setTimeout(() => {
-        document.body.style.transition = 'opacity 1s ease';
-        document.body.style.opacity = '1';
-    }, 100);
-});
