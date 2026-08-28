@@ -37,9 +37,9 @@ async function generateDailyQuotes() {
     try {
         console.log('⏳ 正在调用 API 生成 30 条每日锚点内容...');
 
-        // 调用 SDK 最新 API，使用标准 gemini-1.5-flash 模型
+        // 调用 SDK 最新 API，使用最新支持的模型 gemini-2.5-flash
         const response = await ai.models.generateContent({
-            model: 'gemini-1.5-flash',
+            model: 'gemini-2.5-flash',
             contents: PROMPT,
             config: {
                 responseMimeType: "application/json"
