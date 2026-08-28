@@ -1,0 +1,11 @@
+{
+  "name": "life-anchor-web",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "generate": "node scripts/generate.js"
+  },
+  "dependencies": {
+    "@google/genai": "^0.1.1"
+  }
+}
