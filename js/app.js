@@ -1,151 +1,171 @@
-// --- 1. 高维度结构化“锚点”数据库 ---
-// 严格区分：quote (真实引文), text (思想改写/反思), story (故事/思想实验), dialogue (短对话)
+// --- 1. Web Audio API 音效生成器 (无需任何外部文件，点击即响) ---
+class AnchorSoundEngine {
+    constructor() {
+        this.ctx = null;
+        this.currentSound = 'water'; // 默认水滴声 ('water', 'wind', 'bowl', 'none')
+    }
+
+    initCtx() {
+        if (!this.ctx) {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            this.ctx = new AudioContext();
+        }
+        if (this.ctx.state === 'suspended') {
+            this.ctx.resume();
+        }
+    }
+
+    play() {
+        if (this.currentSound === 'none') return;
+        this.initCtx();
+
+        const now = this.ctx.currentTime;
+
+        if (this.currentSound === 'water') {
+            // 水滴声：高频快速正弦波滑音
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(600, now);
+            osc.frequency.exponentialRampToValueAtTime(1200, now + 0.08);
+
+            gain.gain.setValueAtTime(0.3, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+
+            osc.start(now);
+            osc.stop(now + 0.12);
+        } else if (this.currentSound === 'wind') {
+            // 风铃声：高音双音叠加延音
+            const freqs = [1567.98, 2093.00]; // G6, C7
+            freqs.forEach(f => {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.value = f;
+
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.5);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start(now);
+                osc.stop(now + 1.5);
+            });
+        } else if (this.currentSound === 'bowl') {
+            // 颂钵声：低频泛音与长长沉降衰减
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(216, now); // A3 432Hz 谐波
+
+            gain.gain.setValueAtTime(0.4, now);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + 3.0);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+
+            osc.start(now);
+            osc.stop(now + 3.0);
+        }
+    }
+}
+
+const soundEngine = new AnchorSoundEngine();
+
+// --- 2. 静心“锚点”数据库（纯净且保留丰富体裁） ---
 const anchorDatabase = [
-    // 【迷茫 / 意义 / 提醒 / 真实引文 / 深层】
     {
         id: "a001",
-        contentType: "quote", // 真实引文
-        themes: ["意义", "人生"],
-        emotions: ["迷茫时", "焦虑时"],
-        functions: ["提醒", "安定"],
-        depth: "深层",
+        contentType: "quote",
         zh: "知道为什么而活的人，便能生存于任何处境。",
         en: "He who has a why to live can bear almost any how.",
         sourceZh: "弗里德里希·尼采 《偶像的黄昏》",
-        sourceEn: "Friedrich Nietzsche, Twilight of the Idols",
-        school: "存在主义"
+        sourceEn: "Friedrich Nietzsche, Twilight of the Idols"
     },
-    // 【疲惫 / 自我 / 陪伴 / 思想改写 / 浅层】
     {
         id: "a002",
-        contentType: "text", // 思想改写 / 思考
-        themes: ["自我", "人生"],
-        emotions: ["疲惫时", "难过时"],
-        functions: ["陪伴", "释然"],
-        depth: "浅层",
+        contentType: "text",
         zh: "有些事情，急着想明白，反而更想不明白。",
         en: "Some things only become clear when you stop forcing yourself to understand them.",
         sourceZh: "关于慢下来的思考",
-        sourceEn: "Reflections on Slowing Down",
-        school: "心理学视角"
+        sourceEn: "Reflections on Slowing Down"
     },
-    // 【迷茫 / 意义 / 启发 / 反常识观点 / 中层】
     {
         id: "a003",
         contentType: "text",
-        themes: ["意义", "选择"],
-        emotions: ["迷茫时", "犹豫时"],
-        functions: ["启发", "反思"],
-        depth: "深层",
         zh: "人并不总是在寻找客观答案。很多时候，我们真正想要的是一个能够让自己继续生活下去的解释。",
         en: "People aren't always searching for absolute truth; often, we just need an explanation that gives us a reason to keep going.",
         sourceZh: "关于意义建构的思考",
-        sourceEn: "Reflections on Meaning Making",
-        school: "现代哲学"
+        sourceEn: "Reflections on Meaning Making"
     },
-    // 【孤独 / 自由 / 安定 / 真实引文 / 深层】
     {
         id: "a004",
         contentType: "quote",
-        themes: ["孤独", "自由", "死亡"],
-        emotions: ["孤独时", "平静时"],
-        functions: ["安定", "陪伴"],
-        depth: "深层",
         zh: "人是被抛到这个世界上来的。如何面对这种状态，才是你真正的存在。",
         en: "Man is thrown into the world. How you face this state is your true existence.",
         sourceZh: "让-保罗·萨特 《存在与虚无》",
-        sourceEn: "Jean-Paul Sartre, Being and Nothingness",
-        school: "存在主义"
+        sourceEn: "Jean-Paul Sartre, Being and Nothingness"
     },
-    // 【犹豫 / 行动 / 警醒 / 思想实验 / 中层】
     {
         id: "a005",
-        contentType: "story", // 思想实验
-        themes: ["选择", "时间", "命运"],
-        emotions: ["犹豫时", "想重新开始时"],
-        functions: ["警醒", "行动"],
-        depth: "中层",
-        titleZh: "【思想实验：拉普拉斯妖与选择】",
+        contentType: "story",
+        titleZh: "【思想实验：拉普拉斯妖】",
         titleEn: "[Thought Experiment: Laplace's Demon]",
-        zh: "如果有一个智者知道宇宙这一刻所有粒子位置，就能推算出你未来所有的决定。但这不重要——在你做决定的这一刻，主观上的选择权依然完全在你手里。",
-        en: "Even if physical laws were predetermined, the conscious experience of choice in this moment remains uniquely yours to execute.",
-        sourceZh: "物理学与决定论思考",
-        sourceEn: "Reflections on Physics & Free Will",
-        school: "现代哲学"
+        zh: "即便物理规律早已预设好一切轨迹，在你做出选择的那一刻，主观体验上的决定权依然完全属于你自己。",
+        en: "Even if physical laws were predetermined, the conscious experience of choice in this moment remains uniquely yours.",
+        sourceZh: "物理学与自由意志思考",
+        sourceEn: "Reflections on Physics & Free Will"
     },
-    // 【焦虑 / 欲望 / 释然 / 真实引文 / 中层】
     {
         id: "a006",
         contentType: "quote",
-        themes: ["欲望", "平静"],
-        emotions: ["焦虑时", "疲惫时"],
-        functions: ["释然", "安定"],
-        depth: "中层",
         zh: "我们感受到的痛苦，往往不是来自事物本身，而是来自我们对事物的判断。",
         en: "You have power over your mind - not outside events. Realize this, and you will find strength.",
         sourceZh: "马可·奥勒留 《沉思录》",
-        sourceEn: "Marcus Aurelius, Meditations",
-        school: "斯多葛主义"
+        sourceEn: "Marcus Aurelius, Meditations"
     },
-    // 【失意 / 失去 / 陪伴 / 短对话 / 浅层】
     {
         id: "a007",
-        contentType: "dialogue", // 短对话
-        themes: ["失去", "成长"],
-        emotions: ["失望时", "难过时"],
-        functions: ["陪伴", "释然"],
-        depth: "浅层",
+        contentType: "dialogue",
         zh: "“如果最后还是弄丢了怎么办？”\n“那就证明它只是你人生某一段路程的陪同者，而不是终点。”",
         en: "\"What if I end up losing it anyway?\"\n\"Then it proves it was a companion for part of the journey, not the destination.\"",
         sourceZh: "对白对话录",
-        sourceEn: "Short Dialogue",
-        school: "文学性思考"
+        sourceEn: "Short Dialogue"
     },
-    // 【迷茫 / 欲望 / 警醒 / 真实引文 / 深层】
     {
         id: "a008",
         contentType: "quote",
-        themes: ["欲望", "希望"],
-        emotions: ["焦虑时", "迷茫时"],
-        functions: ["警醒", "反思"],
-        depth: "深层",
         zh: "满地都是六便士，他却抬头看到了月亮。",
         en: "He was so busy looking at the moon that he did not see the sixpence at his feet.",
         sourceZh: "威廉·萨默塞特·毛姆 《月亮与六便士》",
-        sourceEn: "W. Somerset Maugham, The Moon and Sixpence",
-        school: "文学性思考"
+        sourceEn: "W. Somerset Maugham, The Moon and Sixpence"
     },
-    // 【想重新开始 / 时间 / 提醒 / 真实引文 / 浅层】
     {
         id: "a009",
         contentType: "quote",
-        themes: ["时间", "成长"],
-        emotions: ["想重新开始时", "犹豫时"],
-        functions: ["提醒", "行动"],
-        depth: "浅层",
         zh: "凡是过往，皆为序章。",
         en: "What's past is prologue.",
         sourceZh: "威廉·莎士比亚 《暴风雨》",
-        sourceEn: "William Shakespeare, The Tempest",
-        school: "文学性思考"
+        sourceEn: "William Shakespeare, The Tempest"
     },
-    // 【平静 / 自我 / 安定 / 东方智慧 / 中层】
     {
         id: "a010",
         contentType: "quote",
-        themes: ["自我", "平静"],
-        emotions: ["平静时", "疲惫时"],
-        functions: ["安定", "释然"],
-        depth: "中层",
         zh: "天地有大美而不言，四时有明法而不议，万物有成理而不说。",
         en: "The universe possesses great beauty without speaking; the four seasons follow eternal laws without debate.",
         sourceZh: "庄子 《知北游》",
-        sourceEn: "Zhuangzi",
-        school: "道家"
+        sourceEn: "Zhuangzi"
     }
 ];
 
-// --- 2. 应用核心逻辑 ---
+// --- 3. 应用核心交互逻辑 ---
 let currentIndex = -1;
 let historyStack = [];
 let historyPointer = -1;
@@ -158,7 +178,7 @@ const uiTranslations = {
     zh: {
         title: "生命的锚点",
         subtitle: "Anchor of Life",
-        soundText: "水滴声",
+        soundText: { water: "水滴声", wind: "风铃声", bowl: "颂钵声", none: "静音" },
         closeHint: "点击任意位置关闭",
         prevBtn: "上一条",
         nextBtn: "下一条",
@@ -168,7 +188,7 @@ const uiTranslations = {
     en: {
         title: "Anchor of Life",
         subtitle: "How you face this state is your true existence",
-        soundText: "Water Drop",
+        soundText: { water: "Water Drop", wind: "Wind Chime", bowl: "Singing Bowl", none: "Mute" },
         closeHint: "Click anywhere to close",
         prevBtn: "Prev",
         nextBtn: "Next",
@@ -188,18 +208,12 @@ function applyUILanguage() {
     const texts = uiTranslations[currentUILang];
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
-        if (texts[key]) el.textContent = texts[key];
+        if (key === 'soundText') {
+            el.textContent = texts.soundText[soundEngine.currentSound] || texts.soundText.water;
+        } else if (texts[key]) {
+            el.textContent = texts[key];
+        }
     });
-}
-
-// 格式化不同内容类型的标签展示（真实引文 vs 思想思考 vs 故事对话）
-function getTypeBadge(type) {
-    switch (type) {
-        case 'quote': return '<span class="badge badge-quote">真实引文</span>';
-        case 'story': return '<span class="badge badge-story">思想实验/故事</span>';
-        case 'dialogue': return '<span class="badge badge-dialogue">短对话</span>';
-        case 'text': default: return '<span class="badge badge-text">思想反思</span>';
-    }
 }
 
 function renderCard(item) {
@@ -207,16 +221,6 @@ function renderCard(item) {
     const contentBox = messageCard.querySelector('.card-content');
 
     contentBox.innerHTML = '';
-
-    // 构建元数据标签栏 (功能标签 + 情绪状态 + 内容类型)
-    const tagsHtml = `
-        <div class="card-tags-header">
-            ${getTypeBadge(item.contentType)}
-            <span class="tag-item function-tag">【${item.functions[0]}】</span>
-            <span class="tag-item emotion-tag">${item.emotions[0]}</span>
-            <span class="tag-item depth-tag">${item.depth}</span>
-        </div>
-    `;
 
     let bodyHtml = '';
     const isDialogue = item.contentType === 'dialogue';
@@ -226,13 +230,13 @@ function renderCard(item) {
         bodyHtml = `
             ${item.titleZh ? `<h4 class="card-title">${item.titleZh}</h4>` : ''}
             <p class="main-message ${textStyleClass}">${item.zh.replace(/\n/g, '<br>')}</p>
-            <span class="source">— ${item.sourceZh} (${item.school})</span>
+            <span class="source">— ${item.sourceZh}</span>
         `;
     } else if (cardBilingualMode === 'en') {
         bodyHtml = `
             ${item.titleEn ? `<h4 class="card-title">${item.titleEn}</h4>` : ''}
             <p class="main-message ${textStyleClass}">${item.en.replace(/\n/g, '<br>')}</p>
-            <span class="source">— ${item.sourceEn} (${item.school})</span>
+            <span class="source">— ${item.sourceEn}</span>
         `;
     } else {
         bodyHtml = `
@@ -241,16 +245,18 @@ function renderCard(item) {
                 <p class="main-message zh ${textStyleClass}">${item.zh.replace(/\n/g, '<br>')}</p>
                 <p class="main-message en ${textStyleClass}">${item.en.replace(/\n/g, '<br>')}</p>
             </div>
-            <span class="source">— ${item.sourceZh} / ${item.sourceEn} (${item.school})</span>
+            <span class="source">— ${item.sourceZh} / ${item.sourceEn}</span>
         `;
     }
 
-    contentBox.innerHTML = tagsHtml + bodyHtml;
+    contentBox.innerHTML = bodyHtml;
     messageCard.classList.add('visible');
     updateNavButtonsState();
 }
 
 function drawRandomCard() {
+    soundEngine.play(); // 抽卡时触发音效
+
     const randomIndex = Math.floor(Math.random() * anchorDatabase.length);
     const item = anchorDatabase[randomIndex];
 
@@ -265,6 +271,7 @@ function drawRandomCard() {
 
 function showPrevCard() {
     if (historyPointer > 0) {
+        soundEngine.play();
         historyPointer--;
         renderCard(historyStack[historyPointer]);
     }
@@ -272,6 +279,7 @@ function showPrevCard() {
 
 function showNextCard() {
     if (historyPointer < historyStack.length - 1) {
+        soundEngine.play();
         historyPointer++;
         renderCard(historyStack[historyPointer]);
     } else {
@@ -316,8 +324,10 @@ document.addEventListener('DOMContentLoaded', () => {
     applyUILanguage();
     setupTouchEvents();
 
+    // 绑定主要抽取按钮
     document.getElementById('mainAnchorBtn')?.addEventListener('click', drawRandomCard);
 
+    // 绑定导航与功能按钮
     document.getElementById('cardNavPrev')?.addEventListener('click', (e) => {
         e.stopPropagation();
         showPrevCard();
@@ -333,7 +343,42 @@ document.addEventListener('DOMContentLoaded', () => {
         cycleCardLanguageMode();
     });
 
+    // 声音菜单逻辑
+    const soundBtn = document.getElementById('soundBtn');
+    const soundMenu = document.getElementById('soundMenu');
+    const soundText = document.getElementById('soundText');
+
+    soundBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        soundMenu.classList.toggle('show');
+    });
+
+    document.querySelectorAll('.sound-option').forEach(opt => {
+        opt.addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.querySelectorAll('.sound-option').forEach(o => o.classList.remove('active'));
+            opt.classList.add('active');
+            
+            const selectedSound = opt.getAttribute('data-sound');
+            soundEngine.currentSound = selectedSound;
+            
+            // 试听音效
+            soundEngine.play();
+
+            // 更新文本
+            const texts = uiTranslations[currentUILang].soundText;
+            if (soundText) soundText.textContent = texts[selectedSound] || opt.textContent;
+
+            soundMenu.classList.remove('show');
+        });
+    });
+
+    // 点击空白关闭菜单或卡片
     document.addEventListener('click', (e) => {
+        if (soundMenu && !soundMenu.contains(e.target)) {
+            soundMenu.classList.remove('show');
+        }
+
         const card = document.getElementById('messageCard');
         const mainBtn = document.getElementById('mainAnchorBtn');
         if (card.classList.contains('visible') && !card.contains(e.target) && !mainBtn.contains(e.target)) {
@@ -341,6 +386,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // 主题切换
     const themeToggle = document.getElementById('themeToggle');
     themeToggle?.addEventListener('click', () => {
         const isDark = document.body.getAttribute('data-theme') === 'dark';
