@@ -1,8 +1,3 @@
-/*
- * Life Anchor — Content Library
- * Generated from the original single-file implementation.
- * 内容与原版本保持一致；后续可单独扩充此文件。
- */
 const LifeAnchorContent = (() => {
     const philosophicalStories = generateContent();
 
