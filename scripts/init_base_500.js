@@ -53,7 +53,7 @@ function loadExistingQuotes() {
 
 async function generateBatch(count, currentTotal) {
     const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-1.5-flash',
         contents: BATCH_PROMPT(count, currentTotal),
         config: {
             responseMimeType: "application/json"
