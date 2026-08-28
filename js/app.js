@@ -1,8 +1,8 @@
-// --- 1. Web Audio API 音效生成器 (无需任何外部文件，点击即响) ---
+// --- 1. Web Audio API 音效生成器 (包含多种机械键盘轴体及风铃声) ---
 class AnchorSoundEngine {
     constructor() {
         this.ctx = null;
-        this.currentSound = 'water'; // 默认水滴声 ('water', 'wind', 'bowl', 'none')
+        this.currentSound = 'blue'; // 默认：青轴 ('blue', 'red', 'brown', 'yellow', 'wind', 'water')
     }
 
     initCtx() {
@@ -16,70 +16,133 @@ class AnchorSoundEngine {
     }
 
     play() {
-        if (this.currentSound === 'none') return;
         this.initCtx();
-
         const now = this.ctx.currentTime;
 
-        if (this.currentSound === 'water') {
-            // 水滴声：高频快速正弦波滑音
-            const osc = this.ctx.createOscillator();
-            const gain = this.ctx.createGain();
+        switch (this.currentSound) {
+            case 'blue': // 青轴 (Clicky)：高调段落感，清脆 Click 声 + 弹簧底噪
+                this.playMechanicalSwitch(now, { clickFreq: 2400, popFreq: 350, clickDecay: 0.015, bodyDecay: 0.04, pitchJump: true });
+                break;
 
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(600, now);
-            osc.frequency.exponentialRampToValueAtTime(1200, now + 0.08);
+            case 'red': // 红轴 (Linear)：轻盈直上直下，软润触底声
+                this.playMechanicalSwitch(now, { clickFreq: 1100, popFreq: 180, clickDecay: 0.02, bodyDecay: 0.05, pitchJump: false });
+                break;
 
-            gain.gain.setValueAtTime(0.3, now);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+            case 'brown': // 茶轴 (Tactile)：微弱段落感，温和沉稳
+                this.playMechanicalSwitch(now, { clickFreq: 1600, popFreq: 240, clickDecay: 0.018, bodyDecay: 0.045, pitchJump: true });
+                break;
 
-            osc.connect(gain);
-            gain.connect(this.ctx.destination);
+            case 'yellow': // 黄轴 (Heavy Linear)：重触底，木质沉闷厚重声
+                this.playMechanicalSwitch(now, { clickFreq: 800, popFreq: 120, clickDecay: 0.025, bodyDecay: 0.07, pitchJump: false });
+                break;
 
-            osc.start(now);
-            osc.stop(now + 0.12);
-        } else if (this.currentSound === 'wind') {
-            // 风铃声：高音双音叠加延音
-            const freqs = [1567.98, 2093.00]; // G6, C7
-            freqs.forEach(f => {
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
+            case 'wind': // 风铃声：清亮双音延音
+                this.playWindChime(now);
+                break;
 
-                osc.type = 'sine';
-                osc.frequency.value = f;
+            case 'water': // 水滴声：向上滑音
+                this.playWaterDrop(now);
+                break;
 
-                gain.gain.setValueAtTime(0.15, now);
-                gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.5);
-
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-
-                osc.start(now);
-                osc.stop(now + 1.5);
-            });
-        } else if (this.currentSound === 'bowl') {
-            // 颂钵声：低频泛音与长长沉降衰减
-            const osc = this.ctx.createOscillator();
-            const gain = this.ctx.createGain();
-
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(216, now); // A3 432Hz 谐波
-
-            gain.gain.setValueAtTime(0.4, now);
-            gain.gain.exponentialRampToValueAtTime(0.0001, now + 3.0);
-
-            osc.connect(gain);
-            gain.connect(this.ctx.destination);
-
-            osc.start(now);
-            osc.stop(now + 3.0);
+            default:
+                break;
         }
+    }
+
+    // 机械轴体模拟算法：噪声冲激（弹簧/接触点） + 低频正弦波（定位板触底震动）
+    playMechanicalSwitch(now, config) {
+        // 1. 高频 Click / 触底摩擦噪声
+        const bufferSize = this.ctx.sampleRate * config.clickDecay;
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = Math.random() * 2 - 1;
+        }
+
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = buffer;
+
+        const noiseFilter = this.ctx.createBiquadFilter();
+        noiseFilter.type = 'bandpass';
+        noiseFilter.frequency.value = config.clickFreq;
+        noiseFilter.Q.value = 3;
+
+        const noiseGain = this.ctx.createGain();
+        noiseGain.gain.setValueAtTime(0.3, now);
+        noiseGain.gain.exponentialRampToValueAtTime(0.001, now + config.clickDecay);
+
+        noise.connect(noiseFilter);
+        noiseFilter.connect(noiseGain);
+        noiseGain.connect(this.ctx.destination);
+        noise.start(now);
+
+        // 2. 外壳/定位板触底低频闷音 (Thock)
+        const bodyOsc = this.ctx.createOscillator();
+        const bodyGain = this.ctx.createGain();
+
+        bodyOsc.type = 'triangle';
+        bodyOsc.frequency.setValueAtTime(config.popFreq, now);
+
+        if (config.pitchJump) {
+            bodyOsc.frequency.exponentialRampToValueAtTime(config.popFreq * 0.4, now + config.bodyDecay);
+        }
+
+        bodyGain.gain.setValueAtTime(0.5, now);
+        bodyGain.gain.exponentialRampToValueAtTime(0.001, now + config.bodyDecay);
+
+        bodyOsc.connect(bodyGain);
+        bodyGain.connect(this.ctx.destination);
+
+        bodyOsc.start(now);
+        bodyOsc.stop(now + config.bodyDecay);
+    }
+
+    // 风铃音效
+    playWindChime(now) {
+        const freqs = [1567.98, 2093.00, 2349.32]; // G6, C7, D7
+        freqs.forEach((f, idx) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+
+            osc.type = 'sine';
+            osc.frequency.value = f;
+
+            const delay = idx * 0.04;
+            gain.gain.setValueAtTime(0, now + delay);
+            gain.gain.linearRampToValueAtTime(0.12, now + delay + 0.01);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + delay + 1.2);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+
+            osc.start(now + delay);
+            osc.stop(now + delay + 1.2);
+        });
+    }
+
+    // 水滴音效
+    playWaterDrop(now) {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(600, now);
+        osc.frequency.exponentialRampToValueAtTime(1200, now + 0.08);
+
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.12);
     }
 }
 
 const soundEngine = new AnchorSoundEngine();
 
-// --- 2. 静心“锚点”数据库（纯净且保留丰富体裁） ---
+// --- 2. 静心“锚点”数据库 ---
 const anchorDatabase = [
     {
         id: "a001",
@@ -178,7 +241,7 @@ const uiTranslations = {
     zh: {
         title: "生命的锚点",
         subtitle: "Anchor of Life",
-        soundText: { water: "水滴声", wind: "风铃声", bowl: "颂钵声", none: "静音" },
+        soundText: { blue: "青轴 (Clicky)", red: "红轴 (线性)", brown: "茶轴 (段落)", yellow: "黄轴 (厚重)", wind: "风铃声", water: "水滴声" },
         closeHint: "点击任意位置关闭",
         prevBtn: "上一条",
         nextBtn: "下一条",
@@ -188,7 +251,7 @@ const uiTranslations = {
     en: {
         title: "Anchor of Life",
         subtitle: "How you face this state is your true existence",
-        soundText: { water: "Water Drop", wind: "Wind Chime", bowl: "Singing Bowl", none: "Mute" },
+        soundText: { blue: "Blue Switch", red: "Red Switch", brown: "Brown Switch", yellow: "Yellow Switch", wind: "Wind Chime", water: "Water Drop" },
         closeHint: "Click anywhere to close",
         prevBtn: "Prev",
         nextBtn: "Next",
@@ -209,7 +272,7 @@ function applyUILanguage() {
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
         if (key === 'soundText') {
-            el.textContent = texts.soundText[soundEngine.currentSound] || texts.soundText.water;
+            el.textContent = texts.soundText[soundEngine.currentSound] || texts.soundText.blue;
         } else if (texts[key]) {
             el.textContent = texts[key];
         }
@@ -255,7 +318,7 @@ function renderCard(item) {
 }
 
 function drawRandomCard() {
-    soundEngine.play(); // 抽卡时触发音效
+    soundEngine.play(); // 播放所选轴体/音效
 
     const randomIndex = Math.floor(Math.random() * anchorDatabase.length);
     const item = anchorDatabase[randomIndex];
@@ -324,6 +387,19 @@ document.addEventListener('DOMContentLoaded', () => {
     applyUILanguage();
     setupTouchEvents();
 
+    // 重新填充声音菜单选项
+    const soundMenu = document.getElementById('soundMenu');
+    if (soundMenu) {
+        soundMenu.innerHTML = `
+            <button class="sound-option active" data-sound="blue">青轴 (Clicky)</button>
+            <button class="sound-option" data-sound="red">红轴 (线性)</button>
+            <button class="sound-option" data-sound="brown">茶轴 (段落)</button>
+            <button class="sound-option" data-sound="yellow">黄轴 (厚重)</button>
+            <button class="sound-option" data-sound="wind">风铃声</button>
+            <button class="sound-option" data-sound="water">水滴声</button>
+        `;
+    }
+
     // 绑定主要抽取按钮
     document.getElementById('mainAnchorBtn')?.addEventListener('click', drawRandomCard);
 
@@ -345,7 +421,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 声音菜单逻辑
     const soundBtn = document.getElementById('soundBtn');
-    const soundMenu = document.getElementById('soundMenu');
     const soundText = document.getElementById('soundText');
 
     soundBtn?.addEventListener('click', (e) => {
