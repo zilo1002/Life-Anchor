@@ -296,361 +296,374 @@ const selfAcceptance = [
     ["亚伯拉罕·马斯洛说：「任何事情都可以被接受，只要它不否认人性。」你被接受了。", "——《动机与人格》"]
 ];
 
-// 组合所有内容
-existentialQuotes.forEach(q => content.push({ story: q[0], source: q[1] }));
-easternQuotes.forEach(q => content.push({ story: q[0], source: q[1] }));
-westernClassical.forEach(q => content.push({ story: q[0], source: q[1] }));
-modernPhilosophy.forEach(q => content.push({ story: q[0], source: q[1] }));
-chineseLiterature.forEach(q => content.push({ story: q[0], source: q[1] }));
-foreignLiterature.forEach(q => content.push({ story: q[0], source: q[1] }));
-poetry.forEach(q => content.push({ story: q[0], source: q[1] }));
-psychology.forEach(q => content.push({ story: q[0], source: q[1] }));
-existentialism.forEach(q => content.push({ story: q[0], source: q[1] }));
-nature.forEach(q => content.push({ story: q[0], source: q[1] }));
-warmth.forEach(q => content.push({ story: q[0], source: q[1] }));
-wisdomInAdversity.forEach(q => content.push({ story: q[0], source: q[1] }));
-selfAcceptance.forEach(q => content.push({ story: q[0], source: q[1] }));
+// ========== 组合所有内容 ==========
 
-// 额外的100条通用智慧
-const extraWisdom = [
-    "每个人的生命都是一部史诗，即使是最安静的章节也值得被讲述。",
-    "你在黑暗中寻找的光，可能正是你自己。",
-    "伤口是光进入你内心的地方。",
-    "不是所有的河流都流向大海，有些流向森林，滋养生命。",
-    "你不必成为太阳，有时候做一颗星星也很好，照亮一小片天空。",
-    "时间是治愈一切的药，但需要你每天服用——那就是活着。",
-    "有时候，最勇敢的事情不是面对敌人，而是承认自己的脆弱。",
-    "你不必让所有人都理解你，理解自己就够了。",
-    "世界上最远的距离不是生与死，而是不知道自己是谁。",
-    "每一个微笑背后，都有一个曾经哭泣过的灵魂，但哭泣不是终点。",
-    "你不是你的失败，也不是你的错误，你是你选择站起来的方式。",
-    "有时候，迷路是发现自己另一种可能的方式。",
-    "你的故事还没有结束，最后的章节由你来写。",
-    "不是所有的种子都会开花，但每颗种子都有自己的价值。",
-    "痛苦是真实的，但你的韧性更真实。",
-    "你不需要成为完美的版本，只需要成为真实的自己。",
-    "有时候，最重要的东西看不见，需要用心去感受。",
-    "你不是孤独的旅行者，你的每一步都在地球上留下痕迹。",
-    "生命不是一个需要解决的问题，而是一个需要体验的礼物。",
-    "无论你走了多远，家的门永远为你敞开。",
-    "你的存在本身就是对世界的祝福。",
-    "放下不是放弃，而是选择不再让沉重的东西拖累你。",
-    "每一个新的早晨都是重新开始的机会。",
-    "你不是你的过去，过去只是你生命故事的一章。",
-    "有时候，停下来呼吸也是一种前进。",
-    "你的感受是有效的，你的痛苦是真实的，但黑暗不会永远持续。",
-    "你是自己生命的主角，不是配角。",
-    "允许自己不完美，是完美的开始。",
-    "每一个裂缝都是光进入的地方。",
-    "你比你自己想象的更强大。",
-    "生活不是等待风暴过去，而是学会在雨中跳舞。",
-    "你不需要向任何人证明你的价值，你的价值与生俱来。",
-    "有时候，最好的疗愈是允许自己被治愈。",
-    "你的故事是独特的，你的痛苦是共同的。",
-    "不是所有的问题都需要答案，有些只需要被接受。",
-    "你值得被爱，不需要任何理由。",
-    "每一个小小的善举，都在改变世界。",
-    "你在，世界就不一样。",
-    "有时候，最短的路是绕远的那条。",
-    "你的感受没有对错，它们只是你的感受。",
-    "不是所有的人都会喜欢你，但这不是你的问题。",
-    "你不需要成为别人期望的样子，你只需要成为自己。",
-    "生命中的每一次失去，都在为更重要的东西腾出空间。",
-    "你不是你的恐惧，恐惧只是你的一部分。",
-    "每一个结束都是新的开始。",
-    "你无法控制风，但可以调整帆。",
-    "有时候，最难的路是正确的路。",
-    "你的价值不在于你做了什么，而在于你是谁。",
-    "每一个问题都藏着礼物，即使礼物包装得很难看。",
-    "你不需要理解一切才能前进，前进本身会带来理解。",
-    "生活就像海洋，重要的不是避开风浪，而是学会游泳。",
-    "你不是你的失败，失败只是暂时的状态。",
-    "每一个今天都是你未来永远不会回来的礼物。",
-    "你不需要向任何人解释你的选择。",
-    "痛苦会过去，但你的勇气会留下来。",
-    "你是自己故事的作者，你可以改变情节。",
-    "不是所有的梦都会实现，但每个梦都值得被追求。",
-    "你的心碎的地方，可以成为爱流入的地方。",
-    "每一个沉默的时刻，都在积蓄力量。",
-    "你不是你的错误，你是你从错误中站起来的样子。",
-    "有时候，最有力的回答是沉默和继续前行。",
-    "你的存在是宇宙的奇迹，你值得被珍惜。",
-    "生活不是要等待完美时刻，而是要把平凡时刻变得完美。",
-    "你不需要成为光，你本来就有光。",
-    "每一个艰难的时刻都在塑造更强大的你。",
-    "你不是你的过去，而是你选择成为的样子。",
-    "有时候，脆弱是最有力的力量。",
-    "你无法改变过去，但你可以改变对过去的感受。",
-    "每一个生命都有意义，你的意义正在被发现。",
-    "你不是你的疾病，你是你选择的面对方式。",
-    "有时候，放手不是放弃，而是另一种形式的拥有。",
-    "你的故事值得被讲述，你的痛苦值得被理解。",
-    "每一个早晨都是新的可能。",
-    "你不是你的标签，标签只是别人给的。",
-    "有时候，最慢的路是到达最快的路。",
-    "你的感受是正确的，即使没有人理解。",
-    "每一个选择的背后都有勇气。",
-    "你不是你的失败，你是你尝试的次数。",
-    "生活不是关于等待暴风雨过去，而是学会在暴风雨中跳舞。",
-    "你不需要完美才能被爱，你本来就被爱着。",
-    "每一个伤口都是成长的印记。",
-    "你不是你的恐惧，你是你面对恐惧的方式。",
-    "有时候，迷路只是另一个发现的机会。",
-    "你的价值不是由别人决定的。",
-    "每一个结束都是另一段旅程的开始。",
-    "你不是你的过去，你是你选择的未来。",
-    "有时候，最难的对视是面对镜子里的自己。",
-    "你的存在本身就是一种美。",
-    "每一个平凡的日子都是礼物。",
-    "你不是你的错误，你是你改正的决心。",
-    "有时候，安静是最有力的声音。",
-    "你的痛苦不是软弱的标志，而是人性的证明。",
-    "每一个今天都是新的开始。",
-    "你不是你的恐惧，你是你超越恐惧的行动。",
-    "生活不是关于目的地，而是关于旅途。",
-    "你值得被温柔对待，包括来自你自己。",
-    "每一个微笑背后都有故事。",
-    "你不是你的失败，你是你站起来的次数。",
-    "有时候，最难的问题有最简单的答案——活着。",
-    "你的故事是独特的，你的旅程是神圣的。",
-    "每一个呼吸都是新的机会。",
-    "你不是你的过去，你是你现在的选择。",
-    "有时候，最有力的行动是不行动的勇气。",
-    "你的存在本身就是意义。",
-    "每一个艰难的时刻都在教你一些东西。",
-    "你不是你的错误，你是你学习的方式。",
-    "生活不是关于完美，而是关于完整。",
-    "你不需要成为任何人，你只需要成为自己。",
-    "每一个伤口都有愈合的能力。",
-    "你不是你的恐惧，你是你穿越恐惧的勇气。",
-    "有时候，最好的出路是穿过。",
-    "你的故事值得被倾听。",
-    "每一个日出都是新的希望。",
-    "你不是你的失败，你是你尝试的勇气。",
-    "有时候，最安静的时刻思考最清晰。",
-    "你的存在是被需要的。",
-    "每一个生命都有季节，你的季节正在来临。",
-    "你不是你的错误，你是你改正的勇气。",
-    "生活不是关于等待，而是关于创造。",
-    "你值得拥有美好的事物。",
-    "每一个微笑都是小小的奇迹。",
-    "你不是你的恐惧，你是你拥抱变化的勇气。",
-    "有时候，放慢脚步是前进的方式。",
-    "你的痛苦是有意义的。",
-    "每一个新的开始都来自旧的结束。",
-    "你不是你的过去，你是你选择的现在。",
-    "有时候，最难的路是最好的路。",
-    "你的生命是珍贵的。",
-    "每一个艰难时刻都在为美好时刻做准备。",
-    "你不是你的错误，你是你成长的机会。",
-    "生活不是关于完美，而是关于真实。",
-    "你值得被爱。",
-    "每一个平凡的瞬间都可以成为永恒。",
-    "你不是你的恐惧，你是你面对自己的勇气。",
-    "有时候，最好的决定是还没有做出的决定。",
-    "你的存在是奇迹。",
-    "每一个早晨都是重新开始的礼物。",
-    "你不是你的失败，你是你站起来的决定。",
-    "有时候，最安静的声音最有力。",
-    "你的故事很重要。",
-    "每一个呼吸都是新的可能。",
-    "你不是你的过去，你是你选择的道路。",
-    "有时候，迷路是发现新路的方式。",
-    "你的存在是有目的的。",
-    "每一个艰难时刻都在教你坚强。",
-    "你不是你的错误，你是你学习的证明。",
-    "生活不是关于完美，而是关于勇敢。",
-    "你值得被珍惜。",
-    "每一个微笑都在改变世界一点点。",
-    "你不是你的恐惧，你是你超越的力量。",
-    "有时候，最好的答案是不需要答案。",
-    "你的存在是被祝福的。",
-    "每一个早晨都是新的开始。",
-    "你不是你的失败，你是你尝试的证明。",
-    "有时候，最简单的路是最好的路。",
-    "你的痛苦是被理解的。",
-    "每一个结束都是新的可能。",
-    "你不是你的过去，你是你现在的选择。",
-    "生活不是关于完美，而是关于完整。",
-    "你值得被爱，不需要任何证明。",
-    "每一个平凡的日子都有价值。",
-    "你不是你的恐惧，你是你拥抱生命的勇气。",
-    "有时候，停下来看看风景是必要的。",
-    "你的存在是独特的。",
-    "每一个艰难时刻都在为你的故事增添章节。",
-    "你不是你的错误，你是你学习的证明。",
-    "生活不是关于完美，而是关于真实地活着。",
-    "你值得拥有幸福。",
-    "每一个微笑都是给世界的礼物。",
-    "你不是你的过去，你是你现在的样子。",
-    "有时候，最好的路是还没有走过的路。",
-    "你的存在是被需要的。",
-    "每一个早晨都带来新的可能性。",
-    "你不是你的失败，你是你继续前进的证明。",
-    "有时候，最难的决定是正确的决定。",
-    "你的故事还在继续。",
-    "每一个呼吸都是新的机会。",
-    "你不是你的过去，你是你选择成为的人。",
-    "有时候，最短的距离是绕远的那条路。",
-    "你的存在是礼物。",
-    "每一个艰难时刻都在塑造更完整的你。",
-    "你不是你的错误，你是你成长的证据。",
-    "生活不是关于完美，而是关于有勇气活着。",
-    "你值得被爱，被珍惜，被理解。",
-    "每一个微笑都在点亮世界。",
-    "你不是你的恐惧，你是你面对恐惧的勇气。",
-    "有时候，最好的选择是还不知道的选择。",
-    "你的存在是奇迹。",
-    "每一个早晨都是新的开始。",
-    "你不是你的失败，你是你站起来的证明。",
-    "有时候，最安静的时刻最有力量。",
-    "你的故事很重要。",
-    "每一个呼吸都是新的可能。",
-    "你不是你的过去，你是你选择的未来。",
-    "生活不是关于完美，而是关于完整地活着。",
-    "你值得拥有美好的一切。"
-];
-
-// 添加额外智慧到内容库
-extraWisdom.forEach(wisdom => {
-    content.push({ story: wisdom, source: "—— 生活智慧" });
+existentialQuotes.forEach(q => {
+    content.push({
+        story: q[0],
+        source: q[1]
+    });
 });
 
-// 打乱顺序以增加随机性
+easternQuotes.forEach(q => {
+    content.push({
+        story: q[0],
+        source: q[1]
+    });
+});
+
+westernClassical.forEach(q => {
+    content.push({
+        story: q[0],
+        source: q[1]
+    });
+});
+
+modernPhilosophy.forEach(q => {
+    content.push({
+        story: q[0],
+        source: q[1]
+    });
+});
+
+chineseLiterature.forEach(q => {
+    content.push({
+        story: q[0],
+        source: q[1]
+    });
+});
+
+foreignLiterature.forEach(q => {
+    content.push({
+        story: q[0],
+        source: q[1]
+    });
+});
+
+poetry.forEach(q => {
+    content.push({
+        story: q[0],
+        source: q[1]
+    });
+});
+
+psychology.forEach(q => {
+    content.push({
+        story: q[0],
+        source: q[1]
+    });
+});
+
+existentialism.forEach(q => {
+    content.push({
+        story: q[0],
+        source: q[1]
+    });
+});
+
+nature.forEach(q => {
+    content.push({
+        story: q[0],
+        source: q[1]
+    });
+});
+
+warmth.forEach(q => {
+    content.push({
+        story: q[0],
+        source: q[1]
+    });
+});
+
+wisdomInAdversity.forEach(q => {
+    content.push({
+        story: q[0],
+        source: q[1]
+    });
+});
+
+selfAcceptance.forEach(q => {
+    content.push({
+        story: q[0],
+        source: q[1]
+    });
+});
+
+// ========== 额外通用智慧 ==========
+
+extraWisdom.forEach(wisdom => {
+    content.push({
+        story: wisdom,
+        source: "—— 生活智慧"
+    });
+});
+
+// ========== 随机排序 ==========
+
 function shuffleArray(array) {
     const shuffled = [...array];
+
     for (let i = shuffled.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+
+        [shuffled[i], shuffled[j]] = [
+            shuffled[j],
+            shuffled[i]
+        ];
     }
+
     return shuffled;
 }
 
+// 这里返回统一的对象结构。
+// 不在这里提前随机，最终合并后再统一随机。
 return content;
+
 }
 
 
 // ========== 原创扩展内容库 ==========
-    // 以下文案均为 Life Anchor 原创短句，不使用真实人物署名或未经核验的引文。
-    const originalMessages = [
-        ["今天不用把一切都想明白。先把今天过完，已经足够。", "——给今天的你"],
-        ["你不必证明自己值得被留下。存在本身就不需要通过考试。", "——给正在坚持的人"],
-        ["如果路很长，就只看下一步。人生并不要求你一次走完整条路。", "——给此刻的你"],
-        ["有些日子没有答案，也没有关系。沉默本身也是生活的一部分。", "——给安静下来的你"],
-        ["你可以累，可以慢，可以暂时什么都不做。休息不是离开人生。", "——给疲惫的你"],
-        ["不是每一朵花都要同时盛开。你的时间表可以只属于你自己。", "——给还在生长的你"],
-        ["当世界的声音太大时，先听见自己的呼吸。你仍然在这里。", "——给此刻的你"],
-        ["你已经走过许多曾经以为走不过去的夜晚。今晚也可以慢一点。", "——给夜里的你"],
-        ["没有完成今天所有事情，也不等于今天没有意义。", "——给对自己失望的你"],
-        ["人生有时不是向前冲，而是稳稳地不倒下。", "——给坚持着的你"],
-    ];
 
-    const messageOpeners = [
-        "你可以先",
-        "今天允许自己",
-        "此刻不妨",
-        "如果很累，就",
-        "如果不知道怎么办，就",
-        "在这一刻，你可以",
-        "先不要急着",
-        "今晚可以",
-        "明天再决定也可以，今天先",
-        "给自己一点时间，慢慢"
-    ];
+// 以下文案均为 Life Anchor 原创短句，不使用真实人物署名或未经核验的引文。
 
-    const messageActions = [
-        "把脚下的一小步走好",
-        "喝一点水，然后安静坐一会儿",
-        "把必须完成的事情缩小到最小的一件",
-        "允许一个问题暂时没有答案",
-        "把今天交给今天，不提前审判明天",
-        "关掉一些不重要的声音",
-        "把注意力带回自己的呼吸",
-        "承认自己真的已经很累了",
-        "把已经做到的事情也算进今天",
-        "给自己留下一个不必解释的晚上"
-    ];
+const originalMessages = [
+    ["今天不用把一切都想明白。先把今天过完，已经足够。", "——给今天的你"],
+    ["你不必证明自己值得被留下。存在本身就不需要通过考试。", "——给正在坚持的人"],
+    ["如果路很长，就只看下一步。人生并不要求你一次走完整条路。", "——给此刻的你"],
+    ["有些日子没有答案，也没有关系。沉默本身也是生活的一部分。", "——给安静下来的你"],
+    ["你可以累，可以慢，可以暂时什么都不做。休息不是离开人生。", "——给疲惫的你"],
+    ["不是每一朵花都要同时盛开。你的时间表可以只属于你自己。", "——给还在生长的你"],
+    ["当世界的声音太大时，先听见自己的呼吸。你仍然在这里。", "——给此刻的你"],
+    ["你已经走过许多曾经以为走不过去的夜晚。今晚也可以慢一点。", "——给夜里的你"],
+    ["没有完成今天所有事情，也不等于今天没有意义。", "——给对自己失望的你"],
+    ["人生有时不是向前冲，而是稳稳地不倒下。", "——给坚持着的你"]
+];
 
-    const messageClosers = [
-        "你不需要一次解决全部的人生。",
-        "慢一点，并不会让你失去成为自己的机会。",
-        "这一刻过去以后，还会有下一刻。",
-        "你可以先照顾好眼前的自己。",
-        "没有人规定你必须按照同一种速度生活。",
-        "暂时停下来，不代表你放弃了。",
-        "有些答案，需要生活替你慢慢写出来。",
-        "你现在的感受值得被认真对待。",
-        "今天只需要成为今天，不必承担整个人生。",
-        "你仍然拥有重新开始下一小步的可能。"
-    ];
+const messageOpeners = [
+    "你可以先",
+    "今天允许自己",
+    "此刻不妨",
+    "如果很累，就",
+    "如果不知道怎么办，就",
+    "在这一刻，你可以",
+    "先不要急着",
+    "今晚可以",
+    "明天再决定也可以，今天先",
+    "给自己一点时间，慢慢"
+];
 
-    const themes = [
-        "关于存在", "关于时间", "关于疲惫", "关于重新开始", "关于孤独",
-        "关于选择", "关于自我", "关于希望", "关于等待", "关于成长",
-        "关于失去", "关于勇气", "关于日常", "关于呼吸", "关于明天",
-        "关于边界", "关于自由", "关于温柔", "关于变化", "关于坚持"
-    ];
+const messageActions = [
+    "把脚下的一小步走好",
+    "喝一点水，然后安静坐一会儿",
+    "把必须完成的事情缩小到最小的一件",
+    "允许一个问题暂时没有答案",
+    "把今天交给今天，不提前审判明天",
+    "关掉一些不重要的声音",
+    "把注意力带回自己的呼吸",
+    "承认自己真的已经很累了",
+    "把已经做到的事情也算进今天",
+    "给自己留下一个不必解释的晚上"
+];
 
-    const generatedOriginalMessages = [];
-    for (let i = 0; i < 5000; i++) {
-        const opener = messageOpeners[i % messageOpeners.length];
-        const action = messageActions[Math.floor(i / messageOpeners.length) % messageActions.length];
-        const closer = messageClosers[Math.floor(i / (messageOpeners.length * messageActions.length)) % messageClosers.length];
-        const theme = themes[i % themes.length];
+const messageClosers = [
+    "你不需要一次解决全部的人生。",
+    "慢一点，并不会让你失去成为自己的机会。",
+    "这一刻过去以后，还会有下一刻。",
+    "你可以先照顾好眼前的自己。",
+    "没有人规定你必须按照同一种速度生活。",
+    "暂时停下来，不代表你放弃了。",
+    "有些答案，需要生活替你慢慢写出来。",
+    "你现在的感受值得被认真对待。",
+    "今天只需要成为今天，不必承担整个人生。",
+    "你仍然拥有重新开始下一小步的可能。"
+];
 
-        const englishOpeners = [
-            "You can first", "Today, allow yourself to", "For this moment,",
-            "If you are tired, you can", "If you don't know what to do,",
-            "Right now, you can", "Don't rush to", "Tonight, you can",
-            "You can decide tomorrow; today, simply", "Give yourself some time to"
+const themes = [
+    "关于存在",
+    "关于时间",
+    "关于疲惫",
+    "关于重新开始",
+    "关于孤独",
+    "关于选择",
+    "关于自我",
+    "关于希望",
+    "关于等待",
+    "关于成长",
+    "关于失去",
+    "关于勇气",
+    "关于日常",
+    "关于呼吸",
+    "关于明天",
+    "关于边界",
+    "关于自由",
+    "关于温柔",
+    "关于变化",
+    "关于坚持"
+];
+
+const generatedOriginalMessages = [];
+
+const englishOpeners = [
+    "You can first",
+    "Today, allow yourself to",
+    "For this moment,",
+    "If you are tired, you can",
+    "If you don't know what to do,",
+    "Right now, you can",
+    "Don't rush to",
+    "Tonight, you can",
+    "You can decide tomorrow; today, simply",
+    "Give yourself some time to"
+];
+
+const englishActions = [
+    "take one small step",
+    "drink some water and sit quietly for a while",
+    "reduce what must be done today to one small thing",
+    "let one unanswered question remain unanswered for now",
+    "let today belong to today, without judging tomorrow in advance",
+    "turn down a few unimportant voices",
+    "bring your attention back to your breath",
+    "admit that you are genuinely tired",
+    "count what you have already done today",
+    "leave yourself an evening that needs no explanation"
+];
+
+const englishClosers = [
+    "You do not have to solve your whole life at once.",
+    "Going more slowly will not keep you from becoming yourself.",
+    "After this moment passes, there will be another.",
+    "You can take care of the person in front of you first.",
+    "No one says you must live at the same speed as everyone else.",
+    "Pausing for a while does not mean giving up.",
+    "Some answers need life to write them slowly for you.",
+    "What you feel right now deserves to be taken seriously.",
+    "Today only needs to be today; it does not have to carry your whole life.",
+    "You still have the possibility of taking the next small step."
+];
+
+for (let i = 0; i < 5000; i++) {
+    const opener =
+        messageOpeners[i % messageOpeners.length];
+
+    const action =
+        messageActions[
+            Math.floor(i / messageOpeners.length) %
+            messageActions.length
         ];
-        const englishActions = [
-            "take one small step", "drink some water and sit quietly for a while",
-            "reduce what must be done today to one small thing",
-            "let one unanswered question remain unanswered for now",
-            "let today belong to today, without judging tomorrow in advance",
-            "turn down a few unimportant voices", "bring your attention back to your breath",
-            "admit that you are genuinely tired", "count what you have already done today",
-            "leave yourself an evening that needs no explanation"
-        ];
-        const englishClosers = [
-            "You do not have to solve your whole life at once.",
-            "Going more slowly will not keep you from becoming yourself.",
-            "After this moment passes, there will be another.",
-            "You can take care of the person in front of you first.",
-            "No one says you must live at the same speed as everyone else.",
-            "Pausing for a while does not mean giving up.",
-            "Some answers need life to write them slowly for you.",
-            "What you feel right now deserves to be taken seriously.",
-            "Today only needs to be today; it does not have to carry your whole life.",
-            "You still have the possibility of taking the next small step."
+
+    const closer =
+        messageClosers[
+            Math.floor(
+                i /
+                (messageOpeners.length * messageActions.length)
+            ) % messageClosers.length
         ];
 
-        generatedOriginalMessages.push({
-            story: `${opener}${action}。${closer}`,
-            source: `——${theme} · Life Anchor`,
-            storyEn: `${englishOpeners[i % englishOpeners.length]} ${englishActions[Math.floor(i / englishOpeners.length) % englishActions.length]}. ${englishClosers[Math.floor(i / (englishOpeners.length * englishActions.length)) % englishClosers.length]}`,
-            sourceEn: `—${theme.replace(/^关于/, "On ")} · Life Anchor`
-        });
-    }
+    const theme =
+        themes[i % themes.length];
 
-    // 前置少量固定原创文案，随后加入可程序化组合的原创内容。
-    const expandedMessages = [...originalMessages, ...generatedOriginalMessages];
+    const englishOpener =
+        englishOpeners[i % englishOpeners.length];
 
-    // 合并并去重，确保最终内容库至少包含 5000 条可循环使用的独立内容。
-    const seen = new Set();
-    const uniqueMessages = [];
-    for (const item of [...philosophicalStories, ...expandedMessages]) {
-        if (!Array.isArray(item) || item.length < 2) continue;
-        const key = `${item[0]}|||${item[1]}`;
-        if (!seen.has(key)) {
-            seen.add(key);
-            uniqueMessages.push(item);
+    const englishAction =
+        englishActions[
+            Math.floor(i / englishOpeners.length) %
+            englishActions.length
+        ];
+
+    const englishCloser =
+        englishClosers[
+            Math.floor(
+                i /
+                (englishOpeners.length * englishActions.length)
+            ) % englishClosers.length
+        ];
+
+    generatedOriginalMessages.push({
+        story: `${opener}${action}。${closer}`,
+        source: `——${theme} · Life Anchor`,
+        storyEn: `${englishOpener} ${englishAction}. ${englishCloser}`,
+        sourceEn: `—${theme.replace(/^关于/, "On ")} · Life Anchor`
+    });
+}
+
+// ========== 统一数据结构 ==========
+
+function normalizeMessage(item) {
+    // 原始数组格式：
+    // [story, source]
+    if (Array.isArray(item)) {
+        if (item.length < 2) {
+            return null;
         }
+
+        return {
+            story: String(item[0] || ""),
+            source: String(item[1] || ""),
+            storyEn: String(item[2] || ""),
+            sourceEn: String(item[3] || "")
+        };
     }
 
-    return {
-        philosophicalStories: uniqueMessages
-    };
-})();
+    // 对象格式：
+    // { story, source, storyEn, sourceEn }
+    if (item && typeof item === "object") {
+        if (!item.story || !item.source) {
+            return null;
+        }
 
+        return {
+            story: String(item.story),
+            source: String(item.source),
+            storyEn: String(item.storyEn || ""),
+            sourceEn: String(item.sourceEn || "")
+        };
+    }
+
+    return null;
+}
+
+// ========== 合并所有内容 ==========
+
+const allMessages = [
+    ...philosophicalStories,
+    ...originalMessages,
+    ...generatedOriginalMessages
+];
+
+// ========== 去重 ==========
+
+const seen = new Set();
+const uniqueMessages = [];
+
+for (const rawItem of allMessages) {
+    const item = normalizeMessage(rawItem);
+
+    if (!item) {
+        continue;
+    }
+
+    // 中文正文作为主要唯一标识。
+    // 同一中文内容不重复出现。
+    const key = item.story.trim();
+
+    if (!key || seen.has(key)) {
+        continue;
+    }
+
+    seen.add(key);
+    uniqueMessages.push(item);
+}
+
+// ========== 最终随机排序 ==========
+
+const finalMessages = shuffleArray(uniqueMessages);
+
+// ========== 导出 ==========
+
+return {
+    philosophicalStories: finalMessages
+};
+
+})();
