@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="一个安静、温暖的数字港湾。">
-    <meta name="theme-color" content="#FAF7F2">
-    <meta name="language" content="auto">
-    <title>活下去的理由 · Life Anchor</title>
+    <title>活下去的理由 - Life Anchor</title>
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=Noto+Sans+SC:wght@300;400;500&family=Noto+Serif+SC:wght@600;700&display=swap" rel="stylesheet">
+    <!-- Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='10' y='30' width='80' height='40' rx='20' fill='%238B7355'/><rect x='20' y='40' width='60' height='20' rx='10' fill='%23FAF7F2'/></svg>">
-    <link rel="stylesheet" href="./css/style.css">
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <div class="background-glow">
@@ -27,19 +27,19 @@
             <span id="soundLabel">水滴声</span>
         </button>
         <div class="sound-menu" id="soundMenu">
-            <button class="sound-option active" data-sound="water">水滴声</button>
-            <button class="sound-option" data-sound="click">轻柔点击</button>
-            <button class="sound-option" data-sound="mechanical-red">机械红轴</button>
-            <button class="sound-option" data-sound="mechanical-blue">机械青轴</button>
-            <button class="sound-option" data-sound="mechanical-brown">机械茶轴</button>
-            <button class="sound-option" data-sound="mechanical-silent">静音红轴</button>
-            <button class="sound-option" data-sound="bell">风铃</button>
+            <button class="sound-option active" data-sound="water" data-i18n="soundWater">水滴声</button>
+            <button class="sound-option" data-sound="click" data-i18n="soundClick">轻柔点击</button>
+            <button class="sound-option" data-sound="mechanical-red" data-i18n="soundRed">机械红轴</button>
+            <button class="sound-option" data-sound="mechanical-blue" data-i18n="soundBlue">机械青轴</button>
+            <button class="sound-option" data-sound="mechanical-brown" data-i18n="soundBrown">机械茶轴</button>
+            <button class="sound-option" data-sound="mechanical-silent" data-i18n="soundSilent">静音红轴</button>
+            <button class="sound-option" data-sound="bell" data-i18n="soundBell">风铃</button>
         </div>
     </div>
 
     <!-- Theme Toggle -->
     <button class="theme-toggle" id="themeToggle" aria-label="切换主题">
-        <svg class="sun-icon" viewBox="0 0 24 24"><path d="M12 7a5 50 10 0 10 5 5 0 0 0 0-10zM12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 1.42 1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        <svg class="sun-icon" viewBox="0 0 24 24"><path d="M12 7a5 5 0 1 0 5 5 0 0 0 0-10zM12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 1.42 1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
         <svg class="moon-icon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
     </button>
 
@@ -47,41 +47,31 @@
     <div class="flash-overlay" id="flashOverlay"></div>
 
     <main class="main-content">
-        <h1 class="title">活下去的理由<span class="title-decoration">Life Anchor</span></h1>
-        <button class="anchor-button" id="anchorButton" aria-label="按下这个按钮">
+        <h1 class="title"><span data-i18n="title">活下去的理由</span><span class="title-decoration">Life Anchor</span></h1>
+        <button class="anchor-button" id="anchorButton" aria-label="Anchor Button">
             <svg class="icon" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"/></svg>
         </button>
     </main>
 
-    <div class="card-language-selector" id="cardLanguageSelector" aria-label="卡片语言">
-        <button class="card-language-option active" type="button" data-card-language="zh">中文</button>
-        <button class="card-language-option" type="button" data-card-language="en">English</button>
-        <button class="card-language-option" type="button" data-card-language="bilingual">中英</button>
-    </div>
-
     <div class="message-card" id="messageCard">
         <p class="main-message" id="mainMessage"></p>
         <p class="source" id="storySource"></p>
-        <span class="close-hint">点击任意处关闭</span>
+        <span class="close-hint" data-i18n="closeHint">点击任意处关闭</span>
     </div>
 
     <!-- Navigation Buttons -->
-    <div class="message-navigation" id="messageNav" aria-label="消息导航">
-        <button class="nav-btn nav-prev" id="prevBtn" type="button" aria-label="上一条" title="上一条">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M15.5 5 8.5 12l7 7-1.5 1.5L5.5 12 14 3.5z"/>
-            </svg>
-        </button>
-        <button class="nav-btn nav-next" id="nextBtn" type="button" aria-label="下一条" title="下一条">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="m8.5 5 7 7-7 7L10 20.5l8.5-8.5L10 3.5z"/>
-            </svg>
-        </button>
-    </div>
+    <button class="nav-btn nav-prev" id="navPrev" aria-label="Previous">
+        <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+    </button>
+    <button class="nav-btn nav-next" id="navNext" aria-label="Next">
+        <svg viewBox="0 0 24 24"><path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/></svg>
+    </button>
 
-    <footer class="footer-quote">人是被抛入世界的。但如何面对被抛入的状态，才是你真正的存在。</footer>
-    <script src="./data/i18n.js"></script>
-    <script src="./data/messages.js"></script>
-    <script src="./js/app.js"></script>
+    <footer class="footer-quote" data-i18n="footerQuote">人是被抛入世界的。但如何面对被抛入的状态，才是你真正的存在。</footer>
+
+    <!-- Scripts -->
+    <script src="data/i18n.js"></script>
+    <script src="data/messages.js"></script>
+    <script src="js/app.js"></script>
 </body>
 </html>
