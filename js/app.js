@@ -20,38 +20,30 @@ class AnchorSoundEngine {
         const now = this.ctx.currentTime;
 
         switch (this.currentSound) {
-            case 'blue': // 青轴 (Clicky)：高调段落感，清脆 Click 声 + 弹簧底噪
+            case 'blue':
                 this.playMechanicalSwitch(now, { clickFreq: 2400, popFreq: 350, clickDecay: 0.015, bodyDecay: 0.04, pitchJump: true });
                 break;
-
-            case 'red': // 红轴 (Linear)：轻盈直上直下，软润触底声
+            case 'red':
                 this.playMechanicalSwitch(now, { clickFreq: 1100, popFreq: 180, clickDecay: 0.02, bodyDecay: 0.05, pitchJump: false });
                 break;
-
-            case 'brown': // 茶轴 (Tactile)：微弱段落感，温和沉稳
+            case 'brown':
                 this.playMechanicalSwitch(now, { clickFreq: 1600, popFreq: 240, clickDecay: 0.018, bodyDecay: 0.045, pitchJump: true });
                 break;
-
-            case 'yellow': // 黄轴 (Heavy Linear)：重触底，木质沉闷厚重声
+            case 'yellow':
                 this.playMechanicalSwitch(now, { clickFreq: 800, popFreq: 120, clickDecay: 0.025, bodyDecay: 0.07, pitchJump: false });
                 break;
-
-            case 'wind': // 风铃声：清亮双音延音
+            case 'wind':
                 this.playWindChime(now);
                 break;
-
-            case 'water': // 水滴声：向上滑音
+            case 'water':
                 this.playWaterDrop(now);
                 break;
-
             default:
                 break;
         }
     }
 
-    // 机械轴体模拟算法：噪声冲激（弹簧/接触点） + 低频正弦波（定位板触底震动）
     playMechanicalSwitch(now, config) {
-        // 1. 高频 Click / 触底摩擦噪声
         const bufferSize = this.ctx.sampleRate * config.clickDecay;
         const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
         const data = buffer.getChannelData(0);
@@ -76,7 +68,6 @@ class AnchorSoundEngine {
         noiseGain.connect(this.ctx.destination);
         noise.start(now);
 
-        // 2. 外壳/定位板触底低频闷音 (Thock)
         const bodyOsc = this.ctx.createOscillator();
         const bodyGain = this.ctx.createGain();
 
@@ -97,9 +88,8 @@ class AnchorSoundEngine {
         bodyOsc.stop(now + config.bodyDecay);
     }
 
-    // 风铃音效
     playWindChime(now) {
-        const freqs = [1567.98, 2093.00, 2349.32]; // G6, C7, D7
+        const freqs = [1567.98, 2093.00, 2349.32];
         freqs.forEach((f, idx) => {
             const osc = this.ctx.createOscillator();
             const gain = this.ctx.createGain();
@@ -120,7 +110,6 @@ class AnchorSoundEngine {
         });
     }
 
-    // 水滴音效
     playWaterDrop(now) {
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
@@ -142,99 +131,19 @@ class AnchorSoundEngine {
 
 const soundEngine = new AnchorSoundEngine();
 
-// --- 2. 静心“锚点”数据库 ---
-const anchorDatabase = [
-    {
-        id: "a001",
-        contentType: "quote",
-        zh: "知道为什么而活的人，便能生存于任何处境。",
-        en: "He who has a why to live can bear almost any how.",
-        sourceZh: "弗里德里希·尼采 《偶像的黄昏》",
-        sourceEn: "Friedrich Nietzsche, Twilight of the Idols"
-    },
-    {
-        id: "a002",
-        contentType: "text",
-        zh: "有些事情，急着想明白，反而更想不明白。",
-        en: "Some things only become clear when you stop forcing yourself to understand them.",
-        sourceZh: "关于慢下来的思考",
-        sourceEn: "Reflections on Slowing Down"
-    },
-    {
-        id: "a003",
-        contentType: "text",
-        zh: "人并不总是在寻找客观答案。很多时候，我们真正想要的是一个能够让自己继续生活下去的解释。",
-        en: "People aren't always searching for absolute truth; often, we just need an explanation that gives us a reason to keep going.",
-        sourceZh: "关于意义建构的思考",
-        sourceEn: "Reflections on Meaning Making"
-    },
-    {
-        id: "a004",
-        contentType: "quote",
-        zh: "人是被抛到这个世界上来的。如何面对这种状态，才是你真正的存在。",
-        en: "Man is thrown into the world. How you face this state is your true existence.",
-        sourceZh: "让-保罗·萨特 《存在与虚无》",
-        sourceEn: "Jean-Paul Sartre, Being and Nothingness"
-    },
-    {
-        id: "a005",
-        contentType: "story",
-        titleZh: "【思想实验：拉普拉斯妖】",
-        titleEn: "[Thought Experiment: Laplace's Demon]",
-        zh: "即便物理规律早已预设好一切轨迹，在你做出选择的那一刻，主观体验上的决定权依然完全属于你自己。",
-        en: "Even if physical laws were predetermined, the conscious experience of choice in this moment remains uniquely yours.",
-        sourceZh: "物理学与自由意志思考",
-        sourceEn: "Reflections on Physics & Free Will"
-    },
-    {
-        id: "a006",
-        contentType: "quote",
-        zh: "我们感受到的痛苦，往往不是来自事物本身，而是来自我们对事物的判断。",
-        en: "You have power over your mind - not outside events. Realize this, and you will find strength.",
-        sourceZh: "马可·奥勒留 《沉思录》",
-        sourceEn: "Marcus Aurelius, Meditations"
-    },
-    {
-        id: "a007",
-        contentType: "dialogue",
-        zh: "“如果最后还是弄丢了怎么办？”\n“那就证明它只是你人生某一段路程的陪同者，而不是终点。”",
-        en: "\"What if I end up losing it anyway?\"\n\"Then it proves it was a companion for part of the journey, not the destination.\"",
-        sourceZh: "对白对话录",
-        sourceEn: "Short Dialogue"
-    },
-    {
-        id: "a008",
-        contentType: "quote",
-        zh: "满地都是六便士，他却抬头看到了月亮。",
-        en: "He was so busy looking at the moon that he did not see the sixpence at his feet.",
-        sourceZh: "威廉·萨默塞特·毛姆 《月亮与六便士》",
-        sourceEn: "W. Somerset Maugham, The Moon and Sixpence"
-    },
-    {
-        id: "a009",
-        contentType: "quote",
-        zh: "凡是过往，皆为序章。",
-        en: "What's past is prologue.",
-        sourceZh: "威廉·莎士比亚 《暴风雨》",
-        sourceEn: "William Shakespeare, The Tempest"
-    },
-    {
-        id: "a010",
-        contentType: "quote",
-        zh: "天地有大美而不言，四时有明法而不议，万物有成理而不说。",
-        en: "The universe possesses great beauty without speaking; the four seasons follow eternal laws without debate.",
-        sourceZh: "庄子 《知北游》",
-        sourceEn: "Zhuangzi"
-    }
-];
-
-// --- 3. 应用核心交互逻辑 ---
-let currentIndex = -1;
-let historyStack = [];
-let historyPointer = -1;
-let cardBilingualMode = 'zh-en'; 
+// --- 2. 去重池与全局状态 ---
+let anchorDatabase = []; // 总数据（包含 500+ 基础数据及每日自动新增数据）
+let unshownPool = [];    // 未抽取的索引池（核心去重机制）
+let historyStack = [];   // 浏览历史（供上一条/下一条导航）
+let historyPointer = -1; // 历史记录指针
+let cardBilingualMode = 'zh-en';
 let touchStartX = 0;
 let touchEndX = 0;
+
+// 初始化未抽取池
+function resetUnshownPool() {
+    unshownPool = anchorDatabase.map((_, index) => index);
+}
 
 // 多语言 UI 配置
 const uiTranslations = {
@@ -245,8 +154,7 @@ const uiTranslations = {
         closeHint: "点击任意位置关闭",
         prevBtn: "上一条",
         nextBtn: "下一条",
-        langSwitchBtn: "中英",
-        footerQuote: "人是被抛到这个世界上来的。如何面对这种状态，才是你真正的存在。"
+        langSwitchBtn: "中英"
     },
     en: {
         title: "Anchor of Life",
@@ -255,8 +163,7 @@ const uiTranslations = {
         closeHint: "Click anywhere to close",
         prevBtn: "Prev",
         nextBtn: "Next",
-        langSwitchBtn: "Bilingual",
-        footerQuote: "Man is thrown into the world. How you face this state is your true existence."
+        langSwitchBtn: "Bilingual"
     }
 };
 
@@ -317,18 +224,34 @@ function renderCard(item) {
     updateNavButtonsState();
 }
 
+// --- 核心抽取算法：绝对不重复 ---
 function drawRandomCard() {
-    soundEngine.play(); // 播放所选轴体/音效
+    if (anchorDatabase.length === 0) return;
 
-    const randomIndex = Math.floor(Math.random() * anchorDatabase.length);
-    const item = anchorDatabase[randomIndex];
+    soundEngine.play();
 
+    // 如果未抽取池为空（所有句子已看一遍），重置池子重新开始
+    if (unshownPool.length === 0) {
+        resetUnshownPool();
+    }
+
+    // 从未抽取池中随机挑选一个索引
+    const randomIndexInPool = Math.floor(Math.random() * unshownPool.length);
+    const targetDatabaseIndex = unshownPool[randomIndexInPool];
+
+    // 从池中剔除该句子，保证后续不再出现
+    unshownPool.splice(randomIndexInPool, 1);
+
+    const item = anchorDatabase[targetDatabaseIndex];
+
+    // 维护历史浏览栈
     if (historyPointer < historyStack.length - 1) {
         historyStack = historyStack.slice(0, historyPointer + 1);
     }
 
     historyStack.push(item);
     historyPointer = historyStack.length - 1;
+
     renderCard(item);
 }
 
@@ -365,7 +288,6 @@ function cycleCardLanguageMode() {
     }
 }
 
-// 触摸手势
 function setupTouchEvents() {
     const card = document.getElementById('messageCard');
     if (!card) return;
@@ -382,12 +304,44 @@ function setupTouchEvents() {
     }, false);
 }
 
+// 动态装载 quotes.json 数据
+async function loadQuotesData() {
+    try {
+        const response = await fetch('./data/quotes.json');
+        if (!response.ok) throw new Error("HTTP error " + response.status);
+        anchorDatabase = await response.json();
+    } catch (err) {
+        console.warn('加载 ./data/quotes.json 失败，降级使用内建数据:', err);
+        anchorDatabase = [
+            {
+                id: "a001",
+                contentType: "quote",
+                zh: "知道为什么而活的人，便能生存于任何处境。",
+                en: "He who has a why to live can bear almost any how.",
+                sourceZh: "弗里德里希·尼采 《偶像的黄昏》",
+                sourceEn: "Friedrich Nietzsche, Twilight of the Idols"
+            },
+            {
+                id: "a002",
+                contentType: "text",
+                zh: "有些事情，急着想明白，反而更想不明白。",
+                en: "Some things only become clear when you stop forcing yourself to understand them.",
+                sourceZh: "关于慢下来的思考",
+                sourceEn: "Reflections on Slowing Down"
+            }
+        ];
+    } finally {
+        resetUnshownPool();
+    }
+}
+
 // 初始化
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     applyUILanguage();
     setupTouchEvents();
 
-    // 重新填充声音菜单选项
+    await loadQuotesData();
+
     const soundMenu = document.getElementById('soundMenu');
     if (soundMenu) {
         soundMenu.innerHTML = `
@@ -400,10 +354,8 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
     }
 
-    // 绑定主要抽取按钮
     document.getElementById('mainAnchorBtn')?.addEventListener('click', drawRandomCard);
 
-    // 绑定导航与功能按钮
     document.getElementById('cardNavPrev')?.addEventListener('click', (e) => {
         e.stopPropagation();
         showPrevCard();
@@ -419,7 +371,6 @@ document.addEventListener('DOMContentLoaded', () => {
         cycleCardLanguageMode();
     });
 
-    // 声音菜单逻辑
     const soundBtn = document.getElementById('soundBtn');
     const soundText = document.getElementById('soundText');
 
@@ -436,11 +387,8 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const selectedSound = opt.getAttribute('data-sound');
             soundEngine.currentSound = selectedSound;
-            
-            // 试听音效
             soundEngine.play();
 
-            // 更新文本
             const texts = uiTranslations[currentUILang].soundText;
             if (soundText) soundText.textContent = texts[selectedSound] || opt.textContent;
 
@@ -448,7 +396,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // 点击空白关闭菜单或卡片
     document.addEventListener('click', (e) => {
         if (soundMenu && !soundMenu.contains(e.target)) {
             soundMenu.classList.remove('show');
@@ -461,7 +408,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 主题切换
     const themeToggle = document.getElementById('themeToggle');
     themeToggle?.addEventListener('click', () => {
         const isDark = document.body.getAttribute('data-theme') === 'dark';
