@@ -2,13 +2,12 @@ const fs = require('fs');
 const path = require('path');
 const { GoogleGenAI } = require('@google/genai');
 
-// 初始化 SDK (会自动读取 GEMINI_API_KEY 环境变量)
+// 自动读取环境变量 GEMINI_API_KEY
 const ai = new GoogleGenAI();
 const TARGET_COUNT = 500;
 const BATCH_SIZE = 50;
 const JSON_PATH = path.join(__dirname, '../data/quotes.json');
 
-// 候选模型列表 (优先尝试 stable 模型，兼顾 fallback)
 const CANDIDATE_MODELS = [
     'gemini-2.5-flash',
     'gemini-1.5-flash',
@@ -24,12 +23,11 @@ const BATCH_PROMPT = (count, currentTotal) => `
    - 如果是 "text"（思想改写）或 "dialogue"（短对话）或 "story"（思想实验/寓言），sourceZh 与 sourceEn 必须标明思考视角（如：关于慢下来的思考 / 现代心理学视角），绝不伪造名人名字。
 2. 内容多样性：
    - 涵盖人生、时间、孤独、爱、自我、选择、成长、失去、希望、自由、命运、意义等维度。
-   - 包含一句话名言、两三句话思考、短对话、思想实验等多种形态。
+   - 避免生成过于同质化的名言（如不要重复加缪、尼采、加缪《夏天集》等已被高频使用的句子）。
 3. 纯净 JSON 输出（严格遵守）：
    必须只输出符合以下结构的 JSON 数组（不要添加任何 markdown 格式标记，如 \`\`\`json）：
    [
      {
-       "id": "base_${currentTotal + 1}",
        "contentType": "quote",
        "zh": "中文内容",
        "en": "English translation/content",
@@ -46,18 +44,43 @@ async function ensureDataDirExists() {
     }
 }
 
-function loadExistingQuotes() {
-    if (fs.existsSync(JSON_PATH)) {
-        try {
-            const content = fs.readFileSync(JSON_PATH, 'utf-8');
-            const data = JSON.parse(content);
-            return Array.isArray(data) ? data : [];
-        } catch (e) {
-            console.warn('⚠️ 现有 quotes.json 解析失败，将重新初始化数据库。');
-            return [];
+// 加载现有数据并进行强力去重与格式重整
+function loadAndDeduplicateQuotes() {
+    if (!fs.existsSync(JSON_PATH)) return [];
+
+    try {
+        const rawContent = fs.readFileSync(JSON_PATH, 'utf-8');
+        // 处理文件不完整或格式有误的情况
+        let cleanContent = rawContent.trim();
+        if (cleanContent.endsWith(',')) {
+            cleanContent = cleanContent.slice(0, -1) + ']';
+        } else if (!cleanContent.endsWith(']')) {
+            cleanContent = cleanContent + ']';
         }
+
+        const data = JSON.parse(cleanContent);
+        if (!Array.isArray(data)) return [];
+
+        const seenZh = new Set();
+        const deduplicated = [];
+
+        for (const item of data) {
+            if (!item || !item.zh) continue;
+            
+            // 取前 15 个字符做简化对比，防止仅因标点符号微调导致的重复
+            const key = item.zh.trim().substring(0, 15);
+            if (!seenZh.has(key)) {
+                seenZh.add(key);
+                deduplicated.push(item);
+            }
+        }
+
+        console.log(`🧹 已对现有数据清洗去重：原数据件数 -> 精简后剩余 ${deduplicated.length} 条有效独特数据。`);
+        return deduplicated;
+    } catch (e) {
+        console.warn('⚠️ 读取现有 quotes.json 失败或格式损坏，将从空数据库开始生成。');
+        return [];
     }
-    return [];
 }
 
 async function generateBatchWithFallback(count, currentTotal) {
@@ -73,32 +96,23 @@ async function generateBatchWithFallback(count, currentTotal) {
                 }
             });
 
-            // 检查响应文本是否存在，防止 undefined.replace 报错
             const rawText = response?.text || '';
-            if (!rawText) {
-                throw new Error('模型返回的文本内容为空');
-            }
+            if (!rawText) throw new Error('模型返回文本为空');
 
-            // 清理 Markdown 代码块标记
             const cleanText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
             let parsedData = JSON.parse(cleanText);
 
-            // 兜底处理：若模型返回了 { data: [...] } 或 { quotes: [...] } 等包裹对象
             if (!Array.isArray(parsedData) && typeof parsedData === 'object') {
                 const arrayKey = Object.keys(parsedData).find(key => Array.isArray(parsedData[key]));
-                if (arrayKey) {
-                    parsedData = parsedData[arrayKey];
-                }
+                if (arrayKey) parsedData = parsedData[arrayKey];
             }
 
-            if (!Array.isArray(parsedData)) {
-                throw new Error('解析后的数据格式并非预期数组');
-            }
+            if (!Array.isArray(parsedData)) throw new Error('解析后不是数组');
 
             return parsedData;
         } catch (err) {
             lastError = err;
-            console.warn(`⚠️ 模型 [${modelName}] 调用失败 (${err.status || err.message})，尝试切换下一个备选模型...`);
+            console.warn(`⚠️ 模型 [${modelName}] 失败 (${err.message})，尝试切换备选...`);
         }
     }
 
@@ -107,8 +121,15 @@ async function generateBatchWithFallback(count, currentTotal) {
 
 async function main() {
     await ensureDataDirExists();
-    let quotes = loadExistingQuotes();
-    console.log(`📊 当前已装载 ${quotes.length} 条数据，目标数量：${TARGET_COUNT} 条。`);
+    let quotes = loadAndDeduplicateQuotes();
+    
+    // 初始化重新编号
+    quotes = quotes.map((item, idx) => ({
+        ...item,
+        id: `base_${String(idx + 1).padStart(3, '0')}`
+    }));
+
+    console.log(`📊 准备工作就绪！当前有效数据：${quotes.length} 条，目标：${TARGET_COUNT} 条。`);
 
     while (quotes.length < TARGET_COUNT) {
         const remaining = TARGET_COUNT - quotes.length;
@@ -119,35 +140,42 @@ async function main() {
         try {
             const batchData = await generateBatchWithFallback(currentBatchSize, quotes.length);
             
-            // 严谨校验与 ID 格式化拼接
-            const formattedBatch = batchData.map((item, index) => {
-                const globalIndex = quotes.length + index + 1;
-                return {
-                    id: `base_${String(globalIndex).padStart(3, '0')}`,
-                    contentType: item.contentType || 'quote',
-                    zh: String(item.zh || item.content || '').trim(),
-                    en: String(item.en || '').trim(),
-                    sourceZh: String(item.sourceZh || item.source || '未知').trim(),
-                    sourceEn: String(item.sourceEn || 'Unknown').trim()
-                };
-            });
+            let addedCount = 0;
+            for (const item of batchData) {
+                if (quotes.length >= TARGET_COUNT) break;
+                if (!item.zh) continue;
 
-            quotes = quotes.concat(formattedBatch);
-            
-            // 断点续传保存
+                // 再次全局查重，确保新生成的不与已有重复
+                const key = item.zh.trim().substring(0, 15);
+                const isDuplicate = quotes.some(q => q.zh.trim().substring(0, 15) === key);
+
+                if (!isDuplicate) {
+                    quotes.push({
+                        id: `base_${String(quotes.length + 1).padStart(3, '0')}`,
+                        contentType: item.contentType || 'quote',
+                        zh: String(item.zh).trim(),
+                        en: String(item.en || '').trim(),
+                        sourceZh: String(item.sourceZh || '未知').trim(),
+                        sourceEn: String(item.sourceEn || 'Unknown').trim()
+                    });
+                    addedCount++;
+                }
+            }
+
+            // 实时更新并写回本地 json 磁盘
             fs.writeFileSync(JSON_PATH, JSON.stringify(quotes, null, 2), 'utf-8');
-            console.log(`✅ 已成功保存！当前进度：${quotes.length}/${TARGET_COUNT}`);
+            console.log(`✅ 本批次成功新增 ${addedCount} 条独特数据！当前进度：${quotes.length}/${TARGET_COUNT}`);
 
-            // 防频控保护：成功获取一批后主动休眠 1.5 秒
+            // 停顿 1.5 秒避开限流
             await new Promise(resolve => setTimeout(resolve, 1500));
 
         } catch (error) {
-            console.error(`❌ 本批次生成失败，等待 4 秒后重试... 原因:`, error.message);
+            console.error(`❌ 生成失败，4秒后重试... 原因:`, error.message);
             await new Promise(resolve => setTimeout(resolve, 4000));
         }
     }
 
-    console.log(`\n🎉 🎉 🎉 成功完成！基础 500 条 Quotes 数据库已准备完毕并写入到：${JSON_PATH}`);
+    console.log(`\n🎉 🎉 🎉 成功！去重并补齐完毕！干净整洁的 500 条数据已保存至：${JSON_PATH}`);
 }
 
 main();
