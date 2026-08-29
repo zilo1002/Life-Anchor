@@ -1,310 +1,98 @@
-// --- 1. Web Audio API 音效生成器 (包含多种机械键盘轴体及风铃声) ---
-class AnchorSoundEngine {
-    constructor() {
-        this.ctx = null;
-        this.currentSound = 'blue'; // 默认：青轴 ('blue', 'red', 'brown', 'yellow', 'wind', 'water')
-    }
+// ==========================================
+// 1. 全局状态与配置
+// ==========================================
+let anchorDatabase = [];
+let unshownPool = [];
+let historyStack = [];
+let historyPointer = -1;
 
-    initCtx() {
-        if (!this.ctx) {
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            this.ctx = new AudioContext();
-        }
-        if (this.ctx.state === 'suspended') {
-            this.ctx.resume();
-        }
-    }
+// 卡片双语模式: 'zh' | 'en' | 'bilingual'
+let cardBilingualMode = 'zh';
 
-    play() {
-        this.initCtx();
-        const now = this.ctx.currentTime;
+// 声音开关与 Web Audio API 资源
+let soundEnabled = true;
+let audioCtx = null;
 
-        switch (this.currentSound) {
-            case 'blue':
-                this.playMechanicalSwitch(now, { clickFreq: 2400, popFreq: 350, clickDecay: 0.015, bodyDecay: 0.04, pitchJump: true });
-                break;
-            case 'red':
-                this.playMechanicalSwitch(now, { clickFreq: 1100, popFreq: 180, clickDecay: 0.02, bodyDecay: 0.05, pitchJump: false });
-                break;
-            case 'brown':
-                this.playMechanicalSwitch(now, { clickFreq: 1600, popFreq: 240, clickDecay: 0.018, bodyDecay: 0.045, pitchJump: true });
-                break;
-            case 'yellow':
-                this.playMechanicalSwitch(now, { clickFreq: 800, popFreq: 120, clickDecay: 0.025, bodyDecay: 0.07, pitchJump: false });
-                break;
-            case 'wind':
-                this.playWindChime(now);
-                break;
-            case 'water':
-                this.playWaterDrop(now);
-                break;
-            default:
-                break;
+// 手势滑动与 DOM 记录
+let startY = 0;
+let currentY = 0;
+let isDragging = false;
+let currentTranslate = 0;
+let prevTranslate = 0;
+
+// ==========================================
+// 2. 音效生成器 (Web Audio API 纯算法合成)
+// ==========================================
+function getAudioContext() {
+    if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+            audioCtx = new AudioContextClass();
         }
     }
-
-    playMechanicalSwitch(now, config) {
-        const bufferSize = this.ctx.sampleRate * config.clickDecay;
-        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-        const data = buffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) {
-            data[i] = Math.random() * 2 - 1;
-        }
-
-        const noise = this.ctx.createBufferSource();
-        noise.buffer = buffer;
-
-        const noiseFilter = this.ctx.createBiquadFilter();
-        noiseFilter.type = 'bandpass';
-        noiseFilter.frequency.value = config.clickFreq;
-        noiseFilter.Q.value = 3;
-
-        const noiseGain = this.ctx.createGain();
-        noiseGain.gain.setValueAtTime(0.3, now);
-        noiseGain.gain.exponentialRampToValueAtTime(0.001, now + config.clickDecay);
-
-        noise.connect(noiseFilter);
-        noiseFilter.connect(noiseGain);
-        noiseGain.connect(this.ctx.destination);
-        noise.start(now);
-
-        const bodyOsc = this.ctx.createOscillator();
-        const bodyGain = this.ctx.createGain();
-
-        bodyOsc.type = 'triangle';
-        bodyOsc.frequency.setValueAtTime(config.popFreq, now);
-
-        if (config.pitchJump) {
-            bodyOsc.frequency.exponentialRampToValueAtTime(config.popFreq * 0.4, now + config.bodyDecay);
-        }
-
-        bodyGain.gain.setValueAtTime(0.5, now);
-        bodyGain.gain.exponentialRampToValueAtTime(0.001, now + config.bodyDecay);
-
-        bodyOsc.connect(bodyGain);
-        bodyGain.connect(this.ctx.destination);
-
-        bodyOsc.start(now);
-        bodyOsc.stop(now + config.bodyDecay);
+    if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
     }
+    return audioCtx;
+}
 
-    playWindChime(now) {
-        const freqs = [1567.98, 2093.00, 2349.32];
-        freqs.forEach((f, idx) => {
-            const osc = this.ctx.createOscillator();
-            const gain = this.ctx.createGain();
-
-            osc.type = 'sine';
-            osc.frequency.value = f;
-
-            const delay = idx * 0.04;
-            gain.gain.setValueAtTime(0, now + delay);
-            gain.gain.linearRampToValueAtTime(0.12, now + delay + 0.01);
-            gain.gain.exponentialRampToValueAtTime(0.0001, now + delay + 1.2);
-
-            osc.connect(gain);
-            gain.connect(this.ctx.destination);
-
-            osc.start(now + delay);
-            osc.stop(now + delay + 1.2);
-        });
-    }
-
-    playWaterDrop(now) {
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
+function playCardDrawSound() {
+    if (!soundEnabled) return;
+    try {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
 
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(600, now);
-        osc.frequency.exponentialRampToValueAtTime(1200, now + 0.08);
+        osc.frequency.setValueAtTime(180, now);
+        osc.frequency.exponentialRampToValueAtTime(80, now + 0.15);
 
-        gain.gain.setValueAtTime(0.3, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
 
         osc.connect(gain);
-        gain.connect(this.ctx.destination);
+        gain.connect(ctx.destination);
 
         osc.start(now);
-        osc.stop(now + 0.12);
+        osc.stop(now + 0.15);
+    } catch (e) {
+        console.warn('Audio playback failed:', e);
     }
 }
 
-const soundEngine = new AnchorSoundEngine();
+function playClickSound() {
+    if (!soundEnabled) return;
+    try {
+        const ctx = getAudioContext();
+        if (!ctx) return;
 
-// --- 2. 去重池与全局状态 ---
-let anchorDatabase = []; // 总数据（包含 500+ 基础数据及每日自动新增数据）
-let unshownPool = [];    // 未抽取的索引池（核心去重机制）
-let historyStack = [];   // 浏览历史（供上一条/下一条导航）
-let historyPointer = -1; // 历史记录指针
-let cardBilingualMode = 'zh-en';
-let touchStartX = 0;
-let touchEndX = 0;
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
 
-// 初始化未抽取池
-function resetUnshownPool() {
-    unshownPool = anchorDatabase.map((_, index) => index);
-}
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(600, now);
+        osc.frequency.exponentialRampToValueAtTime(200, now + 0.05);
 
-// 多语言 UI 配置
-const uiTranslations = {
-    zh: {
-        title: "生命的锚点",
-        subtitle: "Anchor of Life",
-        soundText: { blue: "青轴 (Clicky)", red: "红轴 (线性)", brown: "茶轴 (段落)", yellow: "黄轴 (厚重)", wind: "风铃声", water: "水滴声" },
-        closeHint: "点击任意位置关闭",
-        prevBtn: "上一条",
-        nextBtn: "下一条",
-        langSwitchBtn: "中英"
-    },
-    en: {
-        title: "Anchor of Life",
-        subtitle: "How you face this state is your true existence",
-        soundText: { blue: "Blue Switch", red: "Red Switch", brown: "Brown Switch", yellow: "Yellow Switch", wind: "Wind Chime", water: "Water Drop" },
-        closeHint: "Click anywhere to close",
-        prevBtn: "Prev",
-        nextBtn: "Next",
-        langSwitchBtn: "Bilingual"
-    }
-};
+        gain.gain.setValueAtTime(0.1, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
 
-function getSystemLanguage() {
-    const lang = navigator.language || navigator.userLanguage;
-    return lang.startsWith('zh') ? 'zh' : 'en';
-}
+        osc.connect(gain);
+        gain.connect(ctx.destination);
 
-const currentUILang = getSystemLanguage();
-
-function applyUILanguage() {
-    const texts = uiTranslations[currentUILang];
-    document.querySelectorAll('[data-i18n]').forEach(el => {
-        const key = el.getAttribute('data-i18n');
-        if (key === 'soundText') {
-            el.textContent = texts.soundText[soundEngine.currentSound] || texts.soundText.blue;
-        } else if (texts[key]) {
-            el.textContent = texts[key];
-        }
-    });
-}
-
-function renderCard(item) {
-    const messageCard = document.getElementById('messageCard');
-    const contentBox = messageCard.querySelector('.card-content');
-
-    contentBox.innerHTML = '';
-
-    let bodyHtml = '';
-    const isDialogue = item.contentType === 'dialogue';
-    const textStyleClass = isDialogue ? 'dialogue-style' : '';
-
-    if (cardBilingualMode === 'zh') {
-        bodyHtml = `
-            ${item.titleZh ? `<h4 class="card-title">${item.titleZh}</h4>` : ''}
-            <p class="main-message ${textStyleClass}">${item.zh.replace(/\n/g, '<br>')}</p>
-            <span class="source">— ${item.sourceZh}</span>
-        `;
-    } else if (cardBilingualMode === 'en') {
-        bodyHtml = `
-            ${item.titleEn ? `<h4 class="card-title">${item.titleEn}</h4>` : ''}
-            <p class="main-message ${textStyleClass}">${item.en.replace(/\n/g, '<br>')}</p>
-            <span class="source">— ${item.sourceEn}</span>
-        `;
-    } else {
-        bodyHtml = `
-            <div class="bilingual-wrapper">
-                ${item.titleZh ? `<h4 class="card-title">${item.titleZh} / ${item.titleEn}</h4>` : ''}
-                <p class="main-message zh ${textStyleClass}">${item.zh.replace(/\n/g, '<br>')}</p>
-                <p class="main-message en ${textStyleClass}">${item.en.replace(/\n/g, '<br>')}</p>
-            </div>
-            <span class="source">— ${item.sourceZh} / ${item.sourceEn}</span>
-        `;
-    }
-
-    contentBox.innerHTML = bodyHtml;
-    messageCard.classList.add('visible');
-    updateNavButtonsState();
-}
-
-// --- 核心抽取算法：绝对不重复 ---
-function drawRandomCard() {
-    if (anchorDatabase.length === 0) return;
-
-    soundEngine.play();
-
-    // 如果未抽取池为空（所有句子已看一遍），重置池子重新开始
-    if (unshownPool.length === 0) {
-        resetUnshownPool();
-    }
-
-    // 从未抽取池中随机挑选一个索引
-    const randomIndexInPool = Math.floor(Math.random() * unshownPool.length);
-    const targetDatabaseIndex = unshownPool[randomIndexInPool];
-
-    // 从池中剔除该句子，保证后续不再出现
-    unshownPool.splice(randomIndexInPool, 1);
-
-    const item = anchorDatabase[targetDatabaseIndex];
-
-    // 维护历史浏览栈
-    if (historyPointer < historyStack.length - 1) {
-        historyStack = historyStack.slice(0, historyPointer + 1);
-    }
-
-    historyStack.push(item);
-    historyPointer = historyStack.length - 1;
-
-    renderCard(item);
-}
-
-function showPrevCard() {
-    if (historyPointer > 0) {
-        soundEngine.play();
-        historyPointer--;
-        renderCard(historyStack[historyPointer]);
+        osc.start(now);
+        osc.stop(now + 0.05);
+    } catch (e) {
+        console.warn('Click audio failed:', e);
     }
 }
 
-function showNextCard() {
-    if (historyPointer < historyStack.length - 1) {
-        soundEngine.play();
-        historyPointer++;
-        renderCard(historyStack[historyPointer]);
-    } else {
-        drawRandomCard();
-    }
-}
-
-function updateNavButtonsState() {
-    const prevBtn = document.getElementById('cardNavPrev');
-    if (prevBtn) prevBtn.disabled = historyPointer <= 0;
-}
-
-function cycleCardLanguageMode() {
-    if (cardBilingualMode === 'zh-en') cardBilingualMode = 'zh';
-    else if (cardBilingualMode === 'zh') cardBilingualMode = 'en';
-    else cardBilingualMode = 'zh-en';
-
-    if (historyPointer >= 0 && historyStack[historyPointer]) {
-        renderCard(historyStack[historyPointer]);
-    }
-}
-
-function setupTouchEvents() {
-    const card = document.getElementById('messageCard');
-    if (!card) return;
-
-    card.addEventListener('touchstart', (e) => {
-        touchStartX = e.changedTouches[0].screenX;
-    }, false);
-
-    card.addEventListener('touchend', (e) => {
-        touchEndX = e.changedTouches[0].screenX;
-        const swipeThreshold = 50;
-        if (touchEndX < touchStartX - swipeThreshold) showNextCard();
-        if (touchEndX > touchStartX + swipeThreshold) showPrevCard();
-    }, false);
-}
-
-// 动态装载 quotes.json 数据
+// ==========================================
+// 3. 数据读取与池管理
+// ==========================================
 async function loadQuotesData() {
     try {
         const response = await fetch('./data/quotes.json');
@@ -313,108 +101,252 @@ async function loadQuotesData() {
     } catch (err) {
         console.warn('加载 ./data/quotes.json 失败，降级使用内建数据:', err);
         anchorDatabase = [
-            {
-                id: "a001",
-                contentType: "quote",
-                zh: "知道为什么而活的人，便能生存于任何处境。",
-                en: "He who has a why to live can bear almost any how.",
-                sourceZh: "弗里德里希·尼采 《偶像的黄昏》",
-                sourceEn: "Friedrich Nietzsche, Twilight of the Idols"
-            },
-            {
-                id: "a002",
-                contentType: "text",
-                zh: "有些事情，急着想明白，反而更想不明白。",
-                en: "Some things only become clear when you stop forcing yourself to understand them.",
-                sourceZh: "关于慢下来的思考",
-                sourceEn: "Reflections on Slowing Down"
-            }
+            { id: "a001", zh: "知道为什么而活的人，可以忍受任何一种生活。", sourceZh: "尼采" },
+            { id: "a002", zh: "有些事情，急着想明白，反而会离答案越来越远。", sourceZh: "村上春树" }
         ];
-    } finally {
-        resetUnshownPool();
     }
 }
 
-// 初始化
-document.addEventListener('DOMContentLoaded', async () => {
-    applyUILanguage();
-    setupTouchEvents();
+function resetUnshownPool() {
+    unshownPool = Array.from({ length: anchorDatabase.length }, (_, i) => i);
+}
 
-    await loadQuotesData();
+function getRandomIndex() {
+    if (unshownPool.length === 0) {
+        resetUnshownPool();
+    }
+    const randomIndexWithinPool = Math.floor(Math.random() * unshownPool.length);
+    const dbIndex = unshownPool[randomIndexWithinPool];
+    unshownPool.splice(randomIndexWithinPool, 1);
+    return dbIndex;
+}
 
-    const soundMenu = document.getElementById('soundMenu');
-    if (soundMenu) {
-        soundMenu.innerHTML = `
-            <button class="sound-option active" data-sound="blue">青轴 (Clicky)</button>
-            <button class="sound-option" data-sound="red">红轴 (线性)</button>
-            <button class="sound-option" data-sound="brown">茶轴 (段落)</button>
-            <button class="sound-option" data-sound="yellow">黄轴 (厚重)</button>
-            <button class="sound-option" data-sound="wind">风铃声</button>
-            <button class="sound-option" data-sound="water">水滴声</button>
+// ==========================================
+// 4. 卡片渲染与 HTML 拼接 (防防错加固版)
+// ==========================================
+function renderCardHTML(item) {
+    if (!item) return '<div class="card-content-inner"><p class="main-message">暂无数据</p></div>';
+
+    // 兼容新旧数据字段：优先读取 zh / en，没有则读取 story / content
+    const textZh = item.zh || item.story || item.content || '';
+    const textEn = item.en || item.contentEn || '';
+    const srcZh = item.sourceZh || item.source || '';
+    const srcEn = item.sourceEn || '';
+
+    const isDialogue = item.contentType === 'dialogue';
+    const textStyleClass = isDialogue ? 'dialogue-style' : '';
+
+    let bodyHtml = '';
+
+    if (cardBilingualMode === 'zh') {
+        bodyHtml = `
+            ${item.titleZh ? `<h4 class="card-title">${item.titleZh}</h4>` : ''}
+            <p class="main-message ${textStyleClass}">${textZh ? textZh.replace(/\n/g, '<br>') : ''}</p>
+            ${srcZh ? `<span class="source">— ${srcZh}</span>` : ''}
+        `;
+    } else if (cardBilingualMode === 'en') {
+        bodyHtml = `
+            ${item.titleEn ? `<h4 class="card-title">${item.titleEn}</h4>` : ''}
+            <p class="main-message ${textStyleClass}">${textEn ? textEn.replace(/\n/g, '<br>') : ''}</p>
+            ${srcEn ? `<span class="source">— ${srcEn}</span>` : ''}
+        `;
+    } else {
+        bodyHtml = `
+            <div class="bilingual-wrapper">
+                ${(item.titleZh || item.titleEn) ? `<h4 class="card-title">${item.titleZh || ''} / ${item.titleEn || ''}</h4>` : ''}
+                <p class="main-message zh ${textStyleClass}">${textZh ? textZh.replace(/\n/g, '<br>') : ''}</p>
+                ${textEn ? `<p class="main-message en ${textStyleClass}">${textEn.replace(/\n/g, '<br>')}</p>` : ''}
+            </div>
+            <span class="source">— ${srcZh} ${srcEn ? '/ ' + srcEn : ''}</span>
         `;
     }
 
-    document.getElementById('mainAnchorBtn')?.addEventListener('click', drawRandomCard);
+    return `<div class="card-content-inner">${bodyHtml}</div>`;
+}
 
-    document.getElementById('cardNavPrev')?.addEventListener('click', (e) => {
-        e.stopPropagation();
-        showPrevCard();
-    });
+function renderSlider() {
+    const sliderTrack = document.getElementById('sliderTrack');
+    if (!sliderTrack) return;
 
-    document.getElementById('cardNavNext')?.addEventListener('click', (e) => {
-        e.stopPropagation();
-        showNextCard();
-    });
+    sliderTrack.innerHTML = '';
 
-    document.getElementById('cardLangToggle')?.addEventListener('click', (e) => {
-        e.stopPropagation();
-        cycleCardLanguageMode();
-    });
+    if (historyStack.length === 0) {
+        updateNavButtonsState();
+        return;
+    }
 
-    const soundBtn = document.getElementById('soundBtn');
-    const soundText = document.getElementById('soundText');
+    const prevIdx = this.historyPointer > 0 ? this.historyPointer - 1 : null;
+    const currIdx = this.historyPointer;
+    const nextIdx = this.historyPointer < this.historyStack.length - 1 ? this.historyPointer + 1 : null;
 
-    soundBtn?.addEventListener('click', (e) => {
-        e.stopPropagation();
-        soundMenu.classList.toggle('show');
-    });
+    const indices = [prevIdx, currIdx, nextIdx];
 
-    document.querySelectorAll('.sound-option').forEach(opt => {
-        opt.addEventListener('click', (e) => {
-            e.stopPropagation();
-            document.querySelectorAll('.sound-option').forEach(o => o.classList.remove('active'));
-            opt.classList.add('active');
-            
-            const selectedSound = opt.getAttribute('data-sound');
-            soundEngine.currentSound = selectedSound;
-            soundEngine.play();
+    indices.forEach((hIdx, slotIndex) => {
+        const cardSlot = document.createElement('div');
+        cardSlot.className = 'card-slot';
+        if (slotIndex === 1) cardSlot.classList.add('active');
 
-            const texts = uiTranslations[currentUILang].soundText;
-            if (soundText) soundText.textContent = texts[selectedSound] || opt.textContent;
-
-            soundMenu.classList.remove('show');
-        });
-    });
-
-    document.addEventListener('click', (e) => {
-        if (soundMenu && !soundMenu.contains(e.target)) {
-            soundMenu.classList.remove('show');
-        }
-
-        const card = document.getElementById('messageCard');
-        const mainBtn = document.getElementById('mainAnchorBtn');
-        if (card.classList.contains('visible') && !card.contains(e.target) && !mainBtn.contains(e.target)) {
-            card.classList.remove('visible');
-        }
-    });
-
-    const themeToggle = document.getElementById('themeToggle');
-    themeToggle?.addEventListener('click', () => {
-        const isDark = document.body.getAttribute('data-theme') === 'dark';
-        if (isDark) {
-            document.body.removeAttribute('data-theme');
+        if (hIdx !== null && hIdx >= 0 && hIdx < historyStack.length) {
+            const dbIndex = historyStack[hIdx];
+            const item = anchorDatabase[dbIndex];
+            cardSlot.innerHTML = renderCardHTML(item);
         } else {
-            document.body.setAttribute('data-theme', 'dark');
+            cardSlot.innerHTML = '';
         }
+
+        sliderTrack.appendChild(cardSlot);
     });
+
+    sliderTrack.style.transition = 'none';
+    sliderTrack.style.transform = 'translateY(-100%)';
+
+    updateNavButtonsState();
+}
+
+function updateNavButtonsState() {
+    const btnPrev = document.getElementById('btnPrev');
+    const btnNext = document.getElementById('btnNext');
+
+    if (btnPrev) {
+        btnPrev.disabled = (historyPointer <= 0);
+    }
+    if (btnNext) {
+        // 如果指针到达最前，按钮不禁用，点击继续抽取新卡片
+        btnNext.disabled = false;
+    }
+}
+
+// ==========================================
+// 5. 交互逻辑 (抽卡/前翻/后翻)
+// ==========================================
+function drawNewCard() {
+    if (anchorDatabase.length === 0) return;
+
+    const dbIndex = getRandomIndex();
+    historyStack.push(dbIndex);
+    historyPointer = historyStack.length - 1;
+
+    renderSlider();
+    playCardDrawSound();
+}
+
+function showPrevCard() {
+    if (historyPointer > 0) {
+        historyPointer--;
+        renderSlider();
+        playClickSound();
+    }
+}
+
+function showNextCard() {
+    if (historyPointer < historyStack.length - 1) {
+        historyPointer++;
+        renderSlider();
+        playClickSound();
+    } else {
+        // 已经到历史记录最后一条，点击后自动抽取一条全新的句子
+        drawNewCard();
+    }
+}
+
+// ==========================================
+// 6. 触摸与手势滑动处理
+// ==========================================
+function setupGestureListeners() {
+    const sliderContainer = document.getElementById('sliderContainer');
+    const sliderTrack = document.getElementById('sliderTrack');
+    if (!sliderContainer || !sliderTrack) return;
+
+    sliderContainer.addEventListener('touchstart', touchStart, { passive: true });
+    sliderContainer.addEventListener('touchmove', touchMove, { passive: true });
+    sliderContainer.addEventListener('touchend', touchEnd);
+
+    sliderContainer.addEventListener('mousedown', touchStart);
+    sliderContainer.addEventListener('mousemove', touchMove);
+    sliderContainer.addEventListener('mouseup', touchEnd);
+    sliderContainer.addEventListener('mouseleave', touchEnd);
+
+    function touchStart(event) {
+        isDragging = true;
+        startY = getPositionY(event);
+        sliderTrack.style.transition = 'none';
+    }
+
+    function touchMove(event) {
+        if (!isDragging) return;
+        const currentPositionY = getPositionY(event);
+        currentY = currentPositionY - startY;
+        sliderTrack.style.transform = `translateY(calc(-100% + ${currentY}px))`;
+    }
+
+    function touchEnd() {
+        if (!isDragging) return;
+        isDragging = false;
+        
+        const threshold = 50;
+        if (currentY < -threshold) {
+            // 向上滑动 -> 下一张
+            showNextCard();
+        } else if (currentY > threshold) {
+            // 向下滑动 -> 上一张
+            showPrevCard();
+        } else {
+            // 归位
+            sliderTrack.style.transition = 'transform 0.3s ease';
+            sliderTrack.style.transform = 'translateY(-100%)';
+        }
+        currentY = 0;
+    }
+
+    function getPositionY(event) {
+        return event.type.includes('touch') ? event.touches[0].clientY : event.clientY;
+    }
+}
+
+// ==========================================
+// 7. 语言与声音控制
+// ==========================================
+function setupControls() {
+    const soundToggle = document.getElementById('soundToggle');
+    if (soundToggle) {
+        soundToggle.addEventListener('click', () => {
+            soundEnabled = !soundEnabled;
+            soundToggle.classList.toggle('active', soundEnabled);
+            playClickSound();
+        });
+    }
+
+    const langToggle = document.getElementById('langToggle');
+    if (langToggle) {
+        langToggle.addEventListener('click', () => {
+            if (cardBilingualMode === 'zh') cardBilingualMode = 'en';
+            else if (cardBilingualMode === 'en') cardBilingualMode = 'bilingual';
+            else cardBilingualMode = 'zh';
+
+            langToggle.textContent = cardBilingualMode.toUpperCase();
+            renderSlider();
+            playClickSound();
+        });
+    }
+
+    const btnPrev = document.getElementById('btnPrev');
+    const btnNext = document.getElementById('btnNext');
+    const btnDraw = document.getElementById('btnDraw');
+
+    if (btnPrev) btnPrev.addEventListener('click', showPrevCard);
+    if (btnNext) btnNext.addEventListener('click', showNextCard);
+    if (btnDraw) btnDraw.addEventListener('click', drawNewCard);
+}
+
+// ==========================================
+// 8. 页面初始化
+// ==========================================
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadQuotesData();
+    resetUnshownPool();
+    setupGestureListeners();
+    setupControls();
+
+    // 页面加载完成后，自动抽取第一张卡片
+    drawNewCard();
 });
