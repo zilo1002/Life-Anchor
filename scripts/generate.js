@@ -4,20 +4,19 @@ const path = require('path');
 // 兼容不同的 Fetch 环境
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
-// 1. 获取系统环境变量中的 API Key 并去除首尾可能的空格换行
+// 1. 获取并清理 API Key
 const apiKey = (process.env.GEMINI_API_KEY || '').trim();
 
 if (!apiKey) {
-    console.error('❌ 错误: 未检测到 GEMINI_API_KEY 环境变量！');
+    console.error('❌ 致命错误: 未在 GitHub Secrets 中设置 GEMINI_API_KEY！');
     process.exit(1);
 }
 
-// 2. 备选模型列表（兼容完整的 Resource Name 路径）
+// 2. 官方标准模型标识列表
 const MODELS = [
     'gemini-2.5-flash',
     'gemini-1.5-flash',
-    'gemini-1.5-pro',
-    'gemini-2.0-flash'
+    'gemini-1.5-pro'
 ];
 
 // Prompt 设定：要求 Gemini 输出标准的 JSON 数组
@@ -38,14 +37,9 @@ const PROMPT = `
 `;
 
 async function callGeminiAPI(modelName) {
-    // 确保 URL 路径拼接符合 API 规范: v1beta/models/{model}:generateContent
-    const modelPath = modelName.startsWith('models/') ? modelName : `models/${modelName}`;
-    const baseUrl = `https://generativelanguage.googleapis.com/v1beta/${modelPath}:generateContent`;
-    
-    const urlObj = new URL(baseUrl);
-    urlObj.searchParams.append('key', apiKey);
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
 
-    const response = await fetch(urlObj.toString(), {
+    const response = await fetch(url, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -71,20 +65,20 @@ function parseAndCleanQuotes(rawText) {
         throw new Error('API 返回的数据内容为空');
     }
 
-    // 1. 清理 Markdown 标记
+    // 清理 Markdown 标记
     const cleanedJsonString = rawText
         .replace(/```json/gi, '')
         .replace(/```/gi, '')
         .trim();
 
-    // 2. 解析 JSON
+    // 解析 JSON
     const parsedData = JSON.parse(cleanedJsonString);
 
     if (!Array.isArray(parsedData)) {
         throw new Error('解析后的数据不是数组格式');
     }
 
-    // 3. 字段清洗与兜底保护
+    // 字段清洗与兜底保护
     return parsedData.map((item, index) => {
         const textZh = item.zh || item.story || item.content || '';
         const textEn = item.en || item.contentEn || '';
@@ -121,7 +115,7 @@ async function generateDailyQuotes() {
     }
 
     if (!rawContent) {
-        console.error('❌ 所有模型均调用失败，无法生成数据！');
+        console.error('❌ 所有模型均调用失败！请检查 GEMINI_API_KEY 是否在 GitHub Secrets 中配置正确且有效！');
         process.exit(1);
     }
 
