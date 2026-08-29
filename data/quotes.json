@@ -726,5 +726,13 @@
     "en": "He who fights with monsters should look to it that he himself does not become a monster. And if you gaze long into an abyss, the abyss also gazes into you.",
     "sourceZh": "弗里德里希·尼采《善恶的彼岸》",
     "sourceEn": "Friedrich Nietzsche, Beyond Good and Evil"
+  },
+  {
+    "id": "base_092",
+    "contentType": "quote",
+    "zh": "知道了为什么而活，就能忍受几乎任何一种生活方式。",
+    "en": "He who has a why to live can bear almost any how.",
+    "sourceZh": "弗里德里希·尼采，《偶像的黄昏》",
+    "sourceEn": "Friedrich Nietzsche, Twilight of the Idols"
   }
 ]
