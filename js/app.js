@@ -122,12 +122,11 @@ function getRandomIndex() {
 }
 
 // ==========================================
-// 4. 卡片渲染与 HTML 拼接 (防防错加固版)
+// 4. 卡片渲染与 HTML 拼接
 // ==========================================
 function renderCardHTML(item) {
     if (!item) return '<div class="card-content-inner"><p class="main-message">暂无数据</p></div>';
 
-    // 兼容新旧数据字段：优先读取 zh / en，没有则读取 story / content
     const textZh = item.zh || item.story || item.content || '';
     const textEn = item.en || item.contentEn || '';
     const srcZh = item.sourceZh || item.source || '';
@@ -175,9 +174,10 @@ function renderSlider() {
         return;
     }
 
-    const prevIdx = this.historyPointer > 0 ? this.historyPointer - 1 : null;
-    const currIdx = this.historyPointer;
-    const nextIdx = this.historyPointer < this.historyStack.length - 1 ? this.historyPointer + 1 : null;
+    // 已修复：去掉了 this.
+    const prevIdx = historyPointer > 0 ? historyPointer - 1 : null;
+    const currIdx = historyPointer;
+    const nextIdx = historyPointer < historyStack.length - 1 ? historyPointer + 1 : null;
 
     const indices = [prevIdx, currIdx, nextIdx];
 
@@ -211,7 +211,6 @@ function updateNavButtonsState() {
         btnPrev.disabled = (historyPointer <= 0);
     }
     if (btnNext) {
-        // 如果指针到达最前，按钮不禁用，点击继续抽取新卡片
         btnNext.disabled = false;
     }
 }
@@ -244,7 +243,6 @@ function showNextCard() {
         renderSlider();
         playClickSound();
     } else {
-        // 已经到历史记录最后一条，点击后自动抽取一条全新的句子
         drawNewCard();
     }
 }
@@ -285,13 +283,10 @@ function setupGestureListeners() {
         
         const threshold = 50;
         if (currentY < -threshold) {
-            // 向上滑动 -> 下一张
             showNextCard();
         } else if (currentY > threshold) {
-            // 向下滑动 -> 上一张
             showPrevCard();
         } else {
-            // 归位
             sliderTrack.style.transition = 'transform 0.3s ease';
             sliderTrack.style.transform = 'translateY(-100%)';
         }
@@ -347,6 +342,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupGestureListeners();
     setupControls();
 
-    // 页面加载完成后，自动抽取第一张卡片
     drawNewCard();
 });
