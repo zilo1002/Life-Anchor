@@ -6,10 +6,10 @@ const { GoogleGenAI } = require('@google/genai');
 const ai = new GoogleGenAI();
 const JSON_PATH = path.join(__dirname, '../data/quotes.json');
 
-// 更新为当前的可用模型
+// 根据最新的 API 提示配置可用模型
 const CANDIDATE_MODELS = [
-    'gemini-2.5-flash',
-    'gemini-2.0-flash'
+    'gemini-3.6-flash',
+    'gemini-3-flash'
 ];
 
 const DAILY_PROMPT = `
