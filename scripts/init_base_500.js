@@ -7,6 +7,14 @@ const TARGET_COUNT = 500;
 const BATCH_SIZE = 50;
 const JSON_PATH = path.join(__dirname, '../data/quotes.json');
 
+// 候选模型列表，防止单一模型因端点变更而 404
+const CANDIDATE_MODELS = [
+    'gemini-1.5-flash',
+    'gemini-1.5-pro',
+    'gemini-2.5-flash',
+    'gemini-3.6-flash'
+];
+
 const BATCH_PROMPT = (count, currentTotal) => `
 你是一个严谨的哲学、心理学与文学内容编辑。请生成 ${count} 条用于心灵沉淀与生命思考的内容（JSON 格式）。
 
@@ -51,17 +59,24 @@ function loadExistingQuotes() {
     return [];
 }
 
-async function generateBatch(count, currentTotal) {
-    const response = await ai.models.generateContent({
-        model: 'gemini-3.6-flash',
-        contents: BATCH_PROMPT(count, currentTotal),
-        config: {
-            responseMimeType: "application/json"
-        }
-    });
+async function generateBatchWithFallback(count, currentTotal) {
+    for (const modelName of CANDIDATE_MODELS) {
+        try {
+            const response = await ai.models.generateContent({
+                model: modelName,
+                contents: BATCH_PROMPT(count, currentTotal),
+                config: {
+                    responseMimeType: "application/json"
+                }
+            });
 
-    const cleanText = response.text.replace(/```json/g, '').replace(/```/g, '').trim();
-    return JSON.parse(cleanText);
+            const cleanText = response.text.replace(/```json/g, '').replace(/```/g, '').trim();
+            return JSON.parse(cleanText);
+        } catch (err) {
+            console.warn(`⚠️ 本批次使用模型 [${modelName}] 调用失败 (${err.status || err.message})，尝试下一个模型...`);
+        }
+    }
+    throw new Error('所有候选 Gemini 模型均调用失败，请检查 API Key 或网络连通性。');
 }
 
 async function main() {
@@ -76,7 +91,7 @@ async function main() {
         console.log(`\n⏳ 正在生成第 ${quotes.length + 1} 至 ${quotes.length + currentBatchSize} 条数据...`);
 
         try {
-            const batchData = await generateBatch(currentBatchSize, quotes.length);
+            const batchData = await generateBatchWithFallback(currentBatchSize, quotes.length);
             
             // 为生成数据补全唯一 ID
             const formattedBatch = batchData.map((item, index) => ({
@@ -86,7 +101,7 @@ async function main() {
 
             quotes = quotes.concat(formattedBatch);
             
-            // 实时保存，防止中断 loss
+            // 实时保存，防止中途网络打断丢失进度
             fs.writeFileSync(JSON_PATH, JSON.stringify(quotes, null, 2), 'utf-8');
             console.log(`✅ 已成功保存！当前进度：${quotes.length}/${TARGET_COUNT}`);
 
