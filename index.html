@@ -20,14 +20,10 @@
 
     <!-- Sound Selector -->
     <div class="sound-selector">
-        <button class="sound-btn" id="soundBtn">
+        <button class="sound-btn" id="soundToggle">
             <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
-            <span id="soundText">音效已开</span>
+            <span id="soundStatusText">音效已开</span>
         </button>
-        <div class="sound-menu" id="soundMenu">
-            <button class="sound-option active" data-sound="on">开启音效</button>
-            <button class="sound-option" data-sound="off">静音</button>
-        </div>
     </div>
 
     <!-- Background Glow -->
@@ -40,8 +36,8 @@
     <!-- Main Content -->
     <main class="main-content">
         <h1 class="title">
-            <span>生命的锚点</span>
-            <span class="title-decoration">Anchor of Life</span>
+            <span data-i18n="title">生命的锚点</span>
+            <span class="title-decoration" data-i18n="subtitle">Anchor of Life</span>
         </h1>
         <button class="anchor-button" id="btnDraw" title="抽取新名言">
             <svg class="icon" viewBox="0 0 24 24">
@@ -56,16 +52,10 @@
         
         <!-- 卡片控制栏 -->
         <div class="card-footer-controls">
-            <button id="langToggle" class="card-control-btn" title="切换显示语言">
-                ZH
-            </button>
+            <button id="langToggle" class="card-control-btn" title="切换显示语言">ZH</button>
             <div class="card-nav-group">
-                <button id="btnPrev" class="card-nav-btn">
-                    ← <span>上一条</span>
-                </button>
-                <button id="btnNext" class="card-nav-btn">
-                    <span>下一条</span> →
-                </button>
+                <button id="btnPrev" class="card-nav-btn">← 上一条</button>
+                <button id="btnNext" class="card-nav-btn">下一条 →</button>
             </div>
         </div>
     </div>
@@ -74,7 +64,7 @@
     <div class="flash-overlay" id="flashOverlay"></div>
     <div class="particles-container" id="particlesContainer"></div>
 
-    <footer class="footer-quote">
+    <footer class="footer-quote" data-i18n="footerQuote">
         Man is thrown into the world. How you face this state is your true existence.
     </footer>
 
