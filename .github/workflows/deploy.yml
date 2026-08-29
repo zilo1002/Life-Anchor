@@ -1,1 +1,63 @@
-1
+name: Generate Quotes & Deploy to GitHub Pages
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # 每天 UTC 0:00 (北京时间 08:00) 自动运行
+  workflow_dispatch:       # 支持在 GitHub 界面手动触发
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  generate-and-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies
+        run: npm install
+
+      # 1. 调用 Gemini 生成数据
+      - name: Generate Daily Quotes
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: node scripts/generate.js
+
+      # 2. 将更新后的 quotes.json 推送回仓库
+      - name: Commit and Push Updated Data
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/quotes.json
+          git commit -m "chore: auto update quotes.json" || echo "No changes to commit"
+          git push
+
+      # 3. 配置并打包 Pages
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "."
+
+      # 4. 发布上线
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
