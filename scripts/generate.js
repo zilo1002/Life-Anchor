@@ -29,17 +29,37 @@ const PROMPT = `
    ]
 `;
 
+// 候选模型列表，防止单一模型名称因 SDK 端点变更而 404
+const CANDIDATE_MODELS = [
+    'gemini-1.5-flash',
+    'gemini-1.5-pro',
+    'gemini-2.5-flash',
+    'gemini-3.6-flash'
+];
+
+async function generateWithFallback() {
+    for (const modelName of CANDIDATE_MODELS) {
+        try {
+            console.log(`⏳ 尝试使用模型 [${modelName}] 生成内容...`);
+            const response = await ai.models.generateContent({
+                model: modelName,
+                contents: PROMPT,
+                config: {
+                    responseMimeType: "application/json"
+                }
+            });
+            console.log(`🎉 成功使用 [${modelName}] 完成请求！`);
+            return response;
+        } catch (err) {
+            console.warn(`⚠️ 模型 [${modelName}] 调用失败 (${err.status || err.message})，正在尝试下一个备用模型...`);
+        }
+    }
+    throw new Error('所有候选 Gemini 模型均调用失败，请检查 API Key 或网络连通性。');
+}
+
 async function generateDailyQuotes() {
     try {
-        console.log('⏳ 正在调用 API 生成 30 条每日锚点内容...');
-
-        const response = await ai.models.generateContent({
-            model: 'gemini-3.6-flash',
-            contents: PROMPT,
-            config: {
-                responseMimeType: "application/json"
-            }
-        });
+        const response = await generateWithFallback();
 
         const rawText = response.text.replace(/```json/g, '').replace(/```/g, '').trim();
         const newQuotes = JSON.parse(rawText);
