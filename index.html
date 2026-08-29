@@ -18,6 +18,18 @@
         <svg class="moon-icon" viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 4.97 0 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/></svg>
     </button>
 
+    <!-- Sound Selector -->
+    <div class="sound-selector">
+        <button class="sound-btn" id="soundBtn">
+            <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+            <span id="soundText">音效已开</span>
+        </button>
+        <div class="sound-menu" id="soundMenu">
+            <button class="sound-option active" data-sound="on">开启音效</button>
+            <button class="sound-option" data-sound="off">静音</button>
+        </div>
+    </div>
+
     <!-- Background Glow -->
     <div class="background-glow">
         <div class="glow-orb"></div>
@@ -28,8 +40,8 @@
     <!-- Main Content -->
     <main class="main-content">
         <h1 class="title">
-            <span data-i18n="title">生命的锚点</span>
-            <span class="title-decoration" data-i18n="subtitle">Anchor of Life</span>
+            <span>生命的锚点</span>
+            <span class="title-decoration">Anchor of Life</span>
         </h1>
         <button class="anchor-button" id="btnDraw" title="抽取新名言">
             <svg class="icon" viewBox="0 0 24 24">
@@ -44,18 +56,15 @@
         
         <!-- 卡片控制栏 -->
         <div class="card-footer-controls">
-            <button id="soundToggle" class="card-control-btn active" title="开关音效">
-                🔊 <span data-i18n="soundBtnText">音效</span>
-            </button>
             <button id="langToggle" class="card-control-btn" title="切换显示语言">
                 ZH
             </button>
             <div class="card-nav-group">
                 <button id="btnPrev" class="card-nav-btn">
-                    ← <span data-i18n="prevBtn">上一条</span>
+                    ← <span>上一条</span>
                 </button>
                 <button id="btnNext" class="card-nav-btn">
-                    <span data-i18n="nextBtn">下一条</span> →
+                    <span>下一条</span> →
                 </button>
             </div>
         </div>
@@ -65,21 +74,11 @@
     <div class="flash-overlay" id="flashOverlay"></div>
     <div class="particles-container" id="particlesContainer"></div>
 
-    <footer class="footer-quote" data-i18n="footerQuote">
+    <footer class="footer-quote">
         Man is thrown into the world. How you face this state is your true existence.
     </footer>
 
     <!-- 应用逻辑 -->
     <script src="js/app.js"></script>
-
-    <!-- 主题切换辅助脚本 -->
-    <script>
-        const themeToggleBtn = document.getElementById('themeToggle');
-        if (themeToggleBtn) {
-            themeToggleBtn.addEventListener('click', () => {
-                document.body.classList.toggle('dark-theme');
-            });
-        }
-    </script>
 </body>
 </html>
