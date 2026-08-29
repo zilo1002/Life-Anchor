@@ -4,15 +4,15 @@ const path = require('path');
 // 兼容不同的 Fetch 环境
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
-// 1. 获取系统环境变量中的 API Key
-const apiKey = process.env.GEMINI_API_KEY;
+// 1. 获取系统环境变量中的 API Key 并去除首尾可能的空格换行
+const apiKey = (process.env.GEMINI_API_KEY || '').trim();
 
 if (!apiKey) {
     console.error('❌ 错误: 未检测到 GEMINI_API_KEY 环境变量！');
     process.exit(1);
 }
 
-// 2. 备选模型列表 (优先使用最新的 2.5/1.5 模型)
+// 2. 备选模型列表
 const MODELS = [
     'gemini-2.5-flash',
     'gemini-1.5-flash',
@@ -37,9 +37,11 @@ const PROMPT = `
 `;
 
 async function callGeminiAPI(modelName) {
-    const url = `[https://generativelanguage.googleapis.com/v1beta/models/$](https://generativelanguage.googleapis.com/v1beta/models/$){modelName}:generateContent?key=${apiKey}`;
-    
-    const response = await fetch(url, {
+    // 使用 URL 对象构造合法安全的 Request URL
+    const urlObj = new URL(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent`);
+    urlObj.searchParams.append('key', apiKey);
+
+    const response = await fetch(urlObj.toString(), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -59,13 +61,13 @@ async function callGeminiAPI(modelName) {
     return data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
 }
 
-// 核心处理函数：加固解析与空值保护
+// 清洗与容错逻辑
 function parseAndCleanQuotes(rawText) {
     if (!rawText || typeof rawText !== 'string') {
         throw new Error('API 返回的数据内容为空');
     }
 
-    // 1. 清理 Markdown 标记与首尾空白 (防止对 undefined 调用 .replace)
+    // 1. 清理 Markdown 标记
     const cleanedJsonString = rawText
         .replace(/```json/gi, '')
         .replace(/```/gi, '')
@@ -78,7 +80,7 @@ function parseAndCleanQuotes(rawText) {
         throw new Error('解析后的数据不是数组格式');
     }
 
-    // 3. 字段清洗与防错补全 (确保每个字段都有兜底默认值)
+    // 3. 字段清洗与兜底保护
     return parsedData.map((item, index) => {
         const textZh = item.zh || item.story || item.content || '';
         const textEn = item.en || item.contentEn || '';
@@ -100,7 +102,6 @@ async function generateDailyQuotes() {
     let rawContent = '';
     let successModel = '';
 
-    // 轮询尝试不同模型
     for (const model of MODELS) {
         try {
             console.log(`⏳ 尝试使用模型 [${model}] 生成内容...`);
@@ -121,14 +122,12 @@ async function generateDailyQuotes() {
     }
 
     try {
-        // 安全解析 JSON
         const newQuotes = parseAndCleanQuotes(rawContent);
 
         if (newQuotes.length === 0) {
             throw new Error('生成的有效句子数量为 0');
         }
 
-        // 写入到 data/quotes.json 文件
         const outputDir = path.join(__dirname, '../data');
         const outputFile = path.join(outputDir, 'quotes.json');
 
@@ -136,13 +135,12 @@ async function generateDailyQuotes() {
             fs.mkdirSync(outputDir, { recursive: true });
         }
 
-        // 格式化写入
         fs.writeFileSync(outputFile, JSON.stringify(newQuotes, null, 2), 'utf-8');
         console.log(`✅ 成功生成并写入 ${newQuotes.length} 条数据到 ${outputFile}`);
 
     } catch (err) {
         console.error(`❌ 数据解析或写入失败:`, err.message);
-        process.exit(1); // 明确告知 GitHub Actions 执行失败
+        process.exit(1);
     }
 }
 
