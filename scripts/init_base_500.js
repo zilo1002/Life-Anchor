@@ -115,3 +115,150 @@ async function main() {
 }
 
 main();
+const fs = require('fs');
+const path = require('path');
+
+// 兼容 node-fetch
+const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
+
+// 读取 API Key
+const apiKey = (process.env.GEMINI_API_KEY || '').trim();
+
+if (!apiKey) {
+    console.error('❌ 错误: 未检测到环境变量 GEMINI_API_KEY！请在终端设置: export GEMINI_API_KEY="your_key"');
+    process.exit(1);
+}
+
+const MODELS = [
+    'gemini-1.5-flash',
+    'gemini-1.5-pro'
+];
+
+const TARGET_TOTAL = 500;
+const BATCH_SIZE = 50; // 每批获取 50 条
+
+// 动态主题，防止多次请求生成重复内容
+const CATEGORIES = [
+    "人生哲学与存在主义",
+    "文学经典与诗意句子",
+    "治愈、内心平静与情绪锚点",
+    "勇气、逆境与自我重塑",
+    "时间、记忆与孤独",
+    "自然、宇宙与生活美学"
+];
+
+function buildPrompt(count, categoryIndex) {
+    const category = CATEGORIES[categoryIndex % CATEGORIES.length];
+    return `
+请生成 ${count} 条关于【${category}】领域的经典名言、金句或深度思考文字。
+要求：
+1. 包含中英文双语及出处。
+2. 严格按照 JSON 数组格式返回，不要包含任何额外的 Markdown 标记（如 \`\`\`json ）或解释性文字。
+
+格式范例：
+[
+  {
+    "zh": "中文句子内容",
+    "en": "English quote text",
+    "sourceZh": "作者/出处中文",
+    "sourceEn": "Author/Source English",
+    "contentType": "single"
+  }
+]
+`;
+}
+
+async function callGemini(modelName, promptText) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            contents: [{ parts: [{ text: promptText }] }]
+        })
+    });
+
+    if (!response.ok) {
+        throw new Error(`HTTP Error ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+}
+
+function cleanAndParse(rawText) {
+    if (!rawText) return [];
+    const cleaned = rawText
+        .replace(/```json/gi, '')
+        .replace(/```/gi, '')
+        .trim();
+    try {
+        const parsed = JSON.parse(cleaned);
+        return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+        return [];
+    }
+}
+
+async function initBase500() {
+    console.log(`🚀 开始生成 500 条基础数据库文件...`);
+    const allQuotes = [];
+    let batchCounter = 0;
+
+    while (allQuotes.length < TARGET_TOTAL) {
+        const remaining = TARGET_TOTAL - allQuotes.length;
+        const currentFetchCount = Math.min(BATCH_SIZE, remaining);
+
+        console.log(`⏳ [进度 ${allQuotes.length}/${TARGET_TOTAL}] 正在请求第 ${batchCounter + 1} 批数据...`);
+
+        const prompt = buildPrompt(currentFetchCount, batchCounter);
+        let rawResult = '';
+
+        for (const model of MODELS) {
+            try {
+                rawResult = await callGemini(model, prompt);
+                if (rawResult) break;
+            } catch (err) {
+                console.warn(`  ⚠️ 模型 ${model} 请求失败，切换备用...`);
+            }
+        }
+
+        const items = cleanAndParse(rawResult);
+
+        if (items.length > 0) {
+            items.forEach(item => {
+                if (item.zh && allQuotes.length < TARGET_TOTAL) {
+                    allQuotes.push({
+                        id: `a_${String(allQuotes.length + 1).padStart(3, '0')}`,
+                        zh: String(item.zh).trim(),
+                        en: item.en ? String(item.en).trim() : '',
+                        sourceZh: item.sourceZh ? String(item.sourceZh).trim() : '未知',
+                        sourceEn: item.sourceEn ? String(item.sourceEn).trim() : 'Unknown',
+                        contentType: item.contentType || 'single'
+                    });
+                }
+            });
+            console.log(`  ✅ 本批次成功添加 ${items.length} 条，当前总计 ${allQuotes.length} 条`);
+        } else {
+            console.warn(`  ⚠️ 本批次未获取到有效 JSON，稍后重试...`);
+        }
+
+        batchCounter++;
+        // 停顿 1 秒避开 API Rate Limit
+        await new Promise(r => setTimeout(r, 1000));
+    }
+
+    // 写入文件
+    const outputDir = path.join(__dirname, '../data');
+    const outputFile = path.join(outputDir, 'quotes.json');
+
+    if (!fs.existsSync(outputDir)) {
+        fs.mkdirSync(outputDir, { recursive: true });
+    }
+
+    fs.writeFileSync(outputFile, JSON.stringify(allQuotes, null, 2), 'utf-8');
+    console.log(`\n🎉 写入完成！成功在 ${outputFile} 生成 ${allQuotes.length} 条基础数据！`);
+}
+
+initBase500();
