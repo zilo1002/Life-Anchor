@@ -1,25 +1,24 @@
 const fs = require('fs');
 const path = require('path');
 
-// 兼容不同的 Fetch 环境
+// 兼容 Node.js 基础环境下的 fetch
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
-// 1. 获取并清理 API Key
+// 1. 获取并清洗 API Key
 const apiKey = (process.env.GEMINI_API_KEY || '').trim();
 
 if (!apiKey) {
-    console.error('❌ 致命错误: 未在 GitHub Secrets 中设置 GEMINI_API_KEY！');
+    console.error('❌ 致命错误: 环境变量 GEMINI_API_KEY 为空！请检查 Workflow yml 文件的 env 配置及 GitHub Secrets！');
     process.exit(1);
 }
 
-// 2. 官方标准模型标识列表
+// 2. 备选模型列表
 const MODELS = [
-    'gemini-2.5-flash',
     'gemini-1.5-flash',
     'gemini-1.5-pro'
 ];
 
-// Prompt 设定：要求 Gemini 输出标准的 JSON 数组
+// 3. Prompt 设定
 const PROMPT = `
 请生成 15 条能够震撼人心、给人生活力量、引发深度思考的金句或名言（包含哲学、文学、历史及当代治愈系文字）。
 请严格按照以下 JSON 数组格式返回，不要包含任何额外的 Markdown 标记（如 \`\`\`json ）或解释性文字：
@@ -59,26 +58,25 @@ async function callGeminiAPI(modelName) {
     return data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
 }
 
-// 清洗与容错逻辑
+// 4. 数据清洗与格式转换
 function parseAndCleanQuotes(rawText) {
     if (!rawText || typeof rawText !== 'string') {
         throw new Error('API 返回的数据内容为空');
     }
 
-    // 清理 Markdown 标记
+    // 剔除 markdown 语法标记
     const cleanedJsonString = rawText
         .replace(/```json/gi, '')
         .replace(/```/gi, '')
         .trim();
 
-    // 解析 JSON
     const parsedData = JSON.parse(cleanedJsonString);
 
     if (!Array.isArray(parsedData)) {
         throw new Error('解析后的数据不是数组格式');
     }
 
-    // 字段清洗与兜底保护
+    // 遍历清洗，补充缺省字段，防止客户端渲染报错
     return parsedData.map((item, index) => {
         const textZh = item.zh || item.story || item.content || '';
         const textEn = item.en || item.contentEn || '';
@@ -96,16 +94,15 @@ function parseAndCleanQuotes(rawText) {
     });
 }
 
+// 5. 主执行逻辑
 async function generateDailyQuotes() {
     let rawContent = '';
-    let successModel = '';
 
     for (const model of MODELS) {
         try {
             console.log(`⏳ 尝试使用模型 [${model}] 生成内容...`);
             rawContent = await callGeminiAPI(model);
             if (rawContent) {
-                successModel = model;
                 console.log(`🎉 成功使用 [${model}] 完成请求！`);
                 break;
             }
