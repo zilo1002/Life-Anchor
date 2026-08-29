@@ -109,48 +109,6 @@ body.dark-theme .theme-toggle .moon-icon { display: block; }
     fill: var(--text-primary);
 }
 
-.sound-menu {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    margin-top: 8px;
-    background: var(--background);
-    border: 1px solid var(--primary);
-    border-radius: 16px;
-    padding: 8px;
-    display: none;
-    flex-direction: column;
-    gap: 4px;
-    box-shadow: 0 10px 40px var(--glow);
-    min-width: 160px;
-}
-
-.sound-menu.show {
-    display: flex;
-}
-
-.sound-option {
-    padding: 10px 16px;
-    border: none;
-    background: transparent;
-    border-radius: 12px;
-    cursor: pointer;
-    font-family: 'Noto Sans SC', sans-serif;
-    font-size: 0.85rem;
-    color: var(--text-primary);
-    text-align: left;
-    transition: all 0.2s ease;
-}
-
-.sound-option:hover {
-    background: var(--accent);
-}
-
-.sound-option.active {
-    background: var(--primary);
-    color: var(--background);
-}
-
 /* Background Glow */
 .background-glow {
     position: fixed;
@@ -326,7 +284,7 @@ body.dark-theme .theme-toggle .moon-icon { display: block; }
     position: fixed;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%) scale(0.9);
     background: var(--background);
     border: 2px solid var(--primary);
     border-radius: 24px;
@@ -340,6 +298,17 @@ body.dark-theme .theme-toggle .moon-icon { display: block; }
     box-shadow: 0 20px 60px var(--glow);
     overflow: hidden;
     user-select: none;
+    
+    /* 默认隐藏，抽卡后添加 .visible 显示 */
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease;
+}
+
+.message-card.visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translate(-50%, -50%) scale(1);
 }
 
 /* 垂直滑动容器与槽位 */
@@ -349,6 +318,7 @@ body.dark-theme .theme-toggle .moon-icon { display: block; }
     height: 300%;
     width: 100%;
     transform: translateY(-100%);
+    transition: transform 0.3s ease;
 }
 
 .card-slot {
@@ -373,13 +343,6 @@ body.dark-theme .theme-toggle .moon-icon { display: block; }
     margin-bottom: 0.8rem;
 }
 
-.card-title {
-    font-family: 'Noto Serif SC', serif;
-    font-size: 1rem;
-    color: var(--primary);
-    margin-bottom: 0.5rem;
-}
-
 .main-message {
     font-family: 'Noto Serif SC', serif;
     font-size: clamp(1rem, 2.5vw, 1.25rem);
@@ -388,12 +351,7 @@ body.dark-theme .theme-toggle .moon-icon { display: block; }
     line-height: 1.7;
 }
 
-.main-message.dialogue-style {
-    font-style: italic;
-    color: var(--text-secondary);
-}
-
-.bilingual-wrapper .main-message.en {
+.main-message.en {
     font-size: 0.95rem;
     color: var(--text-secondary);
     font-family: 'Cormorant Garamond', serif;
