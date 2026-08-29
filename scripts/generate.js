@@ -12,11 +12,12 @@ if (!apiKey) {
     process.exit(1);
 }
 
-// 2. 备选模型列表
+// 2. 备选模型列表（兼容完整的 Resource Name 路径）
 const MODELS = [
     'gemini-2.5-flash',
     'gemini-1.5-flash',
-    'gemini-1.5-pro'
+    'gemini-1.5-pro',
+    'gemini-2.0-flash'
 ];
 
 // Prompt 设定：要求 Gemini 输出标准的 JSON 数组
@@ -37,8 +38,11 @@ const PROMPT = `
 `;
 
 async function callGeminiAPI(modelName) {
-    // 使用 URL 对象构造合法安全的 Request URL
-    const urlObj = new URL(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent`);
+    // 确保 URL 路径拼接符合 API 规范: v1beta/models/{model}:generateContent
+    const modelPath = modelName.startsWith('models/') ? modelName : `models/${modelName}`;
+    const baseUrl = `https://generativelanguage.googleapis.com/v1beta/${modelPath}:generateContent`;
+    
+    const urlObj = new URL(baseUrl);
     urlObj.searchParams.append('key', apiKey);
 
     const response = await fetch(urlObj.toString(), {
