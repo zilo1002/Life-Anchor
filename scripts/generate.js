@@ -1,142 +1,108 @@
 const fs = require('fs');
 const path = require('path');
+const { GoogleGenAI } = require('@google/genai');
 
-// 兼容 Node.js 基础环境下的 fetch
-const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
+// 自动读取环境变量 GEMINI_API_KEY
+const ai = new GoogleGenAI();
+const JSON_PATH = path.join(__dirname, '../data/quotes.json');
 
-// 1. 获取并清洗 API Key
-const apiKey = (process.env.GEMINI_API_KEY || '').trim();
-
-if (!apiKey) {
-    console.error('❌ 致命错误: 环境变量 GEMINI_API_KEY 为空！请检查 Workflow yml 文件的 env 配置及 GitHub Secrets！');
-    process.exit(1);
-}
-
-// 2. 备选模型列表
-const MODELS = [
-    'gemini-1.5-flash',
-    'gemini-1.5-pro'
+// 更新为当前的可用模型
+const CANDIDATE_MODELS = [
+    'gemini-2.5-flash',
+    'gemini-2.0-flash'
 ];
 
-// 3. Prompt 设定
-const PROMPT = `
-请生成 15 条能够震撼人心、给人生活力量、引发深度思考的金句或名言（包含哲学、文学、历史及当代治愈系文字）。
-请严格按照以下 JSON 数组格式返回，不要包含任何额外的 Markdown 标记（如 \`\`\`json ）或解释性文字：
+const DAILY_PROMPT = `
+你是一个严谨的哲学、心理学与文学内容编辑。请生成 1 条用于心灵沉淀与生命思考的新内容（JSON 格式）。
 
-[
-  {
-    "id": "q_001",
-    "zh": "中文句子内容",
-    "en": "English quote text",
-    "sourceZh": "作者/出处中文",
-    "sourceEn": "Author/Source English",
-    "contentType": "single"
-  }
-]
+要求与标准：
+1. 严谨真实性：
+   - 如果 contentType 是 "quote"，必须是现实中真实存在的原话，准确对应作者和作品，严禁捏造。
+   - 如果是 "text"、"dialogue" 或 "story"，sourceZh 与 sourceEn 必须标明思考视角，绝不伪造名人名字。
+2. 纯净 JSON 输出：
+   必须只输出符合以下结构的 JSON 对象（不要添加任何 markdown 格式标记，如 \`\`\`json）：
+   {
+     "contentType": "quote",
+     "zh": "中文内容",
+     "en": "English content",
+     "sourceZh": "中文出处/视角",
+     "sourceEn": "English source/perspective"
+   }
 `;
 
-async function callGeminiAPI(modelName) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
-
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            contents: [{
-                parts: [{ text: PROMPT }]
-            }]
-        })
-    });
-
-    if (!response.ok) {
-        throw new Error(`HTTP Error ${response.status}: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    return data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-}
-
-// 4. 数据清洗与格式转换
-function parseAndCleanQuotes(rawText) {
-    if (!rawText || typeof rawText !== 'string') {
-        throw new Error('API 返回的数据内容为空');
-    }
-
-    // 剔除 markdown 语法标记
-    const cleanedJsonString = rawText
-        .replace(/```json/gi, '')
-        .replace(/```/gi, '')
-        .trim();
-
-    const parsedData = JSON.parse(cleanedJsonString);
-
-    if (!Array.isArray(parsedData)) {
-        throw new Error('解析后的数据不是数组格式');
-    }
-
-    // 遍历清洗，补充缺省字段，防止客户端渲染报错
-    return parsedData.map((item, index) => {
-        const textZh = item.zh || item.story || item.content || '';
-        const textEn = item.en || item.contentEn || '';
-        const srcZh = item.sourceZh || item.source || '';
-        const srcEn = item.sourceEn || '';
-
-        return {
-            id: item.id || `gen_${Date.now()}_${index}`,
-            zh: textZh ? String(textZh).trim() : '',
-            en: textEn ? String(textEn).trim() : '',
-            sourceZh: srcZh ? String(srcZh).trim() : '未知',
-            sourceEn: srcEn ? String(srcEn).trim() : 'Unknown',
-            contentType: item.contentType || 'single'
-        };
-    });
-}
-
-// 5. 主执行逻辑
-async function generateDailyQuotes() {
-    let rawContent = '';
-
-    for (const model of MODELS) {
-        try {
-            console.log(`⏳ 尝试使用模型 [${model}] 生成内容...`);
-            rawContent = await callGeminiAPI(model);
-            if (rawContent) {
-                console.log(`🎉 成功使用 [${model}] 完成请求！`);
-                break;
-            }
-        } catch (err) {
-            console.warn(`⚠️ 模型 [${model}] 调用失败: ${err.message}，正在尝试下一个备用模型...`);
-        }
-    }
-
-    if (!rawContent) {
-        console.error('❌ 所有模型均调用失败！请检查 GEMINI_API_KEY 是否在 GitHub Secrets 中配置正确且有效！');
-        process.exit(1);
-    }
-
+function loadExistingQuotes() {
+    if (!fs.existsSync(JSON_PATH)) return [];
     try {
-        const newQuotes = parseAndCleanQuotes(rawContent);
+        const rawContent = fs.readFileSync(JSON_PATH, 'utf-8').trim();
+        return JSON.parse(rawContent);
+    } catch (e) {
+        console.warn('⚠️ 读取现有 quotes.json 失败，将创建新数组。');
+        return [];
+    }
+}
 
-        if (newQuotes.length === 0) {
-            throw new Error('生成的有效句子数量为 0');
+async function generateWithFallback() {
+    let lastError = null;
+
+    for (const modelName of CANDIDATE_MODELS) {
+        try {
+            console.log(`⏳ 尝试使用模型 [${modelName}] 生成内容...`);
+            const response = await ai.models.generateContent({
+                model: modelName,
+                contents: DAILY_PROMPT,
+                config: {
+                    responseMimeType: "application/json"
+                }
+            });
+
+            const rawText = response?.text || '';
+            if (!rawText) throw new Error('模型返回文本为空');
+
+            const cleanText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+            const parsedData = JSON.parse(cleanText);
+
+            return parsedData;
+        } catch (err) {
+            lastError = err;
+            console.warn(`⚠️ 模型 [${modelName}] 调用失败: ${err.message}，正在尝试下一个备用模型...`);
         }
+    }
 
-        const outputDir = path.join(__dirname, '../data');
-        const outputFile = path.join(outputDir, 'quotes.json');
+    throw new Error(`❌ 所有模型均调用失败！请检查 GEMINI_API_KEY 是否在 GitHub Secrets 中配置正确且有效！\n详细错误: ${lastError?.message}`);
+}
 
-        if (!fs.existsSync(outputDir)) {
-            fs.mkdirSync(outputDir, { recursive: true });
-        }
+async function main() {
+    const quotes = loadExistingQuotes();
+    
+    try {
+        const newItem = await generateWithFallback();
+        
+        // 自动计算新 ID (例如 base_501)
+        const newIndex = quotes.length + 1;
+        const newId = `base_${String(newIndex).padStart(3, '0')}`;
 
-        fs.writeFileSync(outputFile, JSON.stringify(newQuotes, null, 2), 'utf-8');
-        console.log(`✅ 成功生成并写入 ${newQuotes.length} 条数据到 ${outputFile}`);
+        const formattedItem = {
+            id: newId,
+            contentType: newItem.contentType || 'quote',
+            zh: String(newItem.zh || '').trim(),
+            en: String(newItem.en || '').trim(),
+            sourceZh: String(newItem.sourceZh || '未知').trim(),
+            sourceEn: String(newItem.sourceEn || 'Unknown').trim()
+        };
 
-    } catch (err) {
-        console.error(`❌ 数据解析或写入失败:`, err.message);
+        quotes.push(formattedItem);
+
+        // 写回文件
+        const dir = path.dirname(JSON_PATH);
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+        fs.writeFileSync(JSON_PATH, JSON.stringify(quotes, null, 2), 'utf-8');
+        console.log(`🎉 成功生成并追加新条目 [${newId}] 至 quotes.json！当前总计: ${quotes.length} 条。`);
+
+    } catch (error) {
+        console.error(error.message);
         process.exit(1);
     }
 }
 
-generateDailyQuotes();
+main();
