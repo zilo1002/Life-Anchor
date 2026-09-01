@@ -1,17 +1,8 @@
 const fs = require('fs');
 const path = require('path');
-const { GoogleGenAI } = require('@google/genai');
 
-// 自动读取环境变量 GEMINI_API_KEY
-const ai = new GoogleGenAI();
 const JSON_PATH = path.join(__dirname, '../data/quotes.json');
-
-// 听 Google 官方报错的话，直接上 gemini-3.6-flash
-const CANDIDATE_MODELS = [
-    'gemini-3.6-flash',
-    'gemini-1.5-flash'
-];
-
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 const DAILY_PROMPT = `
 你是一个严谨的哲学、心理学与文学内容编辑。请生成 1 条用于心灵沉淀与生命思考的新内容（JSON 格式）。
@@ -42,43 +33,55 @@ function loadExistingQuotes() {
     }
 }
 
-async function generateWithFallback() {
-    let lastError = null;
-
-    for (const modelName of CANDIDATE_MODELS) {
-        try {
-            console.log(`⏳ 尝试使用模型 [${modelName}] 生成内容...`);
-            const response = await ai.models.generateContent({
-                model: modelName,
-                contents: DAILY_PROMPT,
-                config: {
-                    responseMimeType: "application/json"
-                }
-            });
-
-            const rawText = response?.text || '';
-            console.log(`🔍 模型 [${modelName}] 返回的内容:`, rawText);
-
-            if (!rawText) throw new Error('模型返回文本为空');
-
-            const cleanText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
-            const parsedData = JSON.parse(cleanText);
-
-            return parsedData;
-        } catch (err) {
-            lastError = err;
-            console.warn(`⚠️ 模型 [${modelName}] 调用失败: ${err.message}，正在尝试下一个备用模型...`);
-        }
+async function generateWithRestApi() {
+    if (!GEMINI_API_KEY) {
+        throw new Error('❌ 未找到 GEMINI_API_KEY 环境变量，请检查 GitHub Secrets 配置！');
     }
 
-    throw new Error(`❌ 所有模型均调用失败！请检查 GEMINI_API_KEY 是否在 GitHub Secrets 中配置正确且有效！\n详细错误: ${lastError?.message}`);
+    // 直接使用标准的 Gemini v1beta 接口地址，用 gemini-2.5-flash
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+    
+    console.log('⏳ 正在通过官方 REST API 请求生成内容...');
+
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            contents: [{
+                parts: [{ text: DAILY_PROMPT }]
+            }],
+            generationConfig: {
+                responseMimeType: "application/json"
+            }
+        })
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`API 请求失败 (状态码 ${response.status}): ${errorText}`);
+    }
+
+    const data = await response.json();
+    
+    // 从标准的 Gemini 响应结构中提取文本
+    const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    console.log('🔍 模型返回的原始文本:', rawText);
+
+    if (!rawText) {
+        throw new Error('模型返回的文本内容为空');
+    }
+
+    const cleanText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+    return JSON.parse(cleanText);
 }
 
 async function main() {
     const quotes = loadExistingQuotes();
     
     try {
-        const newItem = await generateWithFallback();
+        const newItem = await generateWithRestApi();
         
         const newIndex = quotes.length + 1;
         const newId = `base_${String(newIndex).padStart(3, '0')}`;
@@ -101,7 +104,7 @@ async function main() {
         console.log(`🎉 成功生成并追加新条目 [${newId}] 至 quotes.json！当前总计: ${quotes.length} 条。`);
 
     } catch (error) {
-        console.error(error.message);
+        console.error('❌ 生成过程发生错误:', error.message);
         process.exit(1);
     }
 }
