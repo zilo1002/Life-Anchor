@@ -280,8 +280,9 @@ body.dark-theme .theme-toggle .moon-icon { display: block; }
 }
 
 /* ==========================================
-   优化后的消息卡片与自适应滚动容器
+   精准切卡滑块与独立视窗标准样式
    ========================================== */
+
 .message-card {
     position: fixed;
     top: 50%;
@@ -290,16 +291,17 @@ body.dark-theme .theme-toggle .moon-icon { display: block; }
     background: var(--background);
     border: 2px solid var(--primary);
     border-radius: 24px;
-    padding: clamp(1.25rem, 4vw, 2rem);
+    padding: clamp(1rem, 3vw, 1.5rem);
     width: min(90vw, 480px);
     
-    /* 核心修改：去掉死锁的 height，改为自适应及安全最大高度限制 */
-    max-height: 82vh;
+    /* 核心：固定主卡片视窗高度，严禁溢出 */
+    height: 380px; 
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
     z-index: 100;
     box-shadow: 0 20px 60px var(--glow);
-    overflow: hidden;
+    overflow: hidden; /* 关键：把上下视窗外未选中的卡片切掉，防止堆叠 */
     user-select: none;
     
     opacity: 0;
@@ -313,43 +315,32 @@ body.dark-theme .theme-toggle .moon-icon { display: block; }
     transform: translate(-50%, -50%) scale(1);
 }
 
-/* 垂直滑动容器与槽位（自适应高度改造） */
+/* 垂直滑动轨道：总高度为 300%（容纳上一条、当前条、下一条） */
 .slider-track {
     display: flex;
     flex-direction: column;
+    height: 300%;
     width: 100%;
-    transform: translateY(-100%);
-    transition: transform 0.3s ease;
+    /* 默认停留在中间那张（可通过 app.js 动态修改 translateY 切换） */
+    transform: translateY(-33.333%);
+    transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
+/* 每一条卡片槽位：严格平分轨道的三分之一高度，独占一屏视窗 */
 .card-slot {
+    height: 33.3333%;
     width: 100%;
-    /* 单张卡片高度自适应，超出时内部可独立滚动，绝对不会被锁死撑破 */
-    max-height: calc(82vh - 120px);
-    overflow-y: auto;
-    padding: 10px 15px;
-    box-sizing: border-box;
     display: flex;
     align-items: center;
     justify-content: center;
-    
-    /* 自定义滚动条美观整洁 */
-    scrollbar-width: thin;
-    scrollbar-color: var(--secondary) transparent;
-}
-
-.card-slot::-webkit-scrollbar {
-    width: 4px;
-}
-.card-slot::-webkit-scrollbar-thumb {
-    background-color: var(--secondary);
-    border-radius: 4px;
+    padding: 0 10px;
+    box-sizing: border-box;
+    overflow-y: auto; /* 如果单条内容太长，内部可独立滚动 */
 }
 
 .card-content-inner {
     text-align: center;
     width: 100%;
-    padding: 4px 0;
 }
 
 .bilingual-wrapper {
@@ -365,8 +356,8 @@ body.dark-theme .theme-toggle .moon-icon { display: block; }
     font-weight: 500;
     color: var(--text-primary);
     line-height: 1.7;
-    word-break: break-word; /* 防止长英文撑破 */
-    white-space: pre-wrap;   /* 完美保留文本换行 */
+    word-break: break-word;
+    white-space: pre-wrap;
 }
 
 .main-message.en {
@@ -385,13 +376,12 @@ body.dark-theme .theme-toggle .moon-icon { display: block; }
     opacity: 0.9;
 }
 
-/* 卡片底部控制栏与按钮 */
+/* 卡片底部控制栏与按钮：永远稳稳贴在主卡片底部 */
 .card-footer-controls {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding-top: 0.8rem;
-    margin-top: auto; /* 保证控制栏永远稳稳贴在卡片底部 */
     border-top: 1px dashed var(--secondary);
     z-index: 10;
     background: var(--background);
