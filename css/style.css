@@ -315,28 +315,29 @@ body.dark-theme .theme-toggle .moon-icon { display: block; }
     transform: translate(-50%, -50%) scale(1);
 }
 
-/* 垂直滑动轨道：总高度为 300%（容纳上一条、当前条、下一条） */
+/* 垂直滑动轨道：强制总高度为 300% */
 .slider-track {
     display: flex;
     flex-direction: column;
     height: 300%;
     width: 100%;
-    /* 默认停留在中间那张（可通过 app.js 动态修改 translateY 切换） */
     transform: translateY(-33.333%);
-    transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
-/* 每一条卡片槽位：严格平分轨道的三分之一高度，独占一屏视窗 */
+/* 核心修复：每个卡片槽位必须严格撑满父级视窗的三分之一，高度决不能塌陷 */
 .card-slot {
-    height: 33.3333%;
+    height: 33.333333%;
     width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0 10px;
+    padding: 0 16px;
     box-sizing: border-box;
-    overflow-y: auto; /* 如果单条内容太长，内部可独立滚动 */
+    flex-shrink: 0; /* 防止被挤压变形 */
+    overflow-y: auto; /* 超长文字独立滚动 */
 }
+
 
 .card-content-inner {
     text-align: center;
