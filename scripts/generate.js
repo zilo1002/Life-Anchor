@@ -39,7 +39,7 @@ async function generateWithRestApi() {
     }
 
     // 直接使用标准的 Gemini v1beta 接口地址，用 gemini-2.5-flash
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${GEMINI_API_KEY}`;
     
     console.log('⏳ 正在通过官方 REST API 请求生成内容...');
 
