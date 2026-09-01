@@ -120,18 +120,16 @@ function getRandomIndex() {
 }
 
 // ==========================================
-// 4. 卡片渲染与 HTML 拼接 (完美匹配你的 JSON 结构)
+// 4. 卡片渲染与 HTML 拼接
 // ==========================================
 function renderCardHTML(item) {
     if (!item) return '<div class="card-content-inner"><p class="main-message">暂无数据</p></div>';
 
-    // 适配你的 JSON 字段名（保留了多字段兜底）
     const textZh = item.zh || item.story || item.content || '';
     const textEn = item.en || item.contentEn || '';
     const srcZh = item.sourceZh || item.source || '';
     const srcEn = item.sourceEn || '';
 
-    // 判断内容类型（对话类型可以加个特殊样式）
     const isDialogue = item.contentType === 'dialogue';
     const textStyleClass = isDialogue ? 'dialogue-style' : '';
 
@@ -150,7 +148,6 @@ function renderCardHTML(item) {
             ${srcEn ? `<span class="source">— ${srcEn}</span>` : ''}
         `;
     } else {
-        // 双语模式
         bodyHtml = `
             <div class="bilingual-wrapper">
                 ${(item.titleZh || item.titleEn) ? `<h4 class="card-title">${item.titleZh || ''} / ${item.titleEn || ''}</h4>` : ''}
@@ -163,8 +160,58 @@ function renderCardHTML(item) {
 
     return `<div class="card-content-inner">${bodyHtml}</div>`;
 }
+
 // ==========================================
-// 5. 交互逻辑 (抽卡/前翻/后翻)
+// 5. 轨道与滑块渲染（核心补回部分）
+// ==========================================
+function renderSlider() {
+    const sliderTrack = document.getElementById('sliderTrack');
+    if (!sliderTrack) return;
+
+    sliderTrack.innerHTML = '';
+
+    if (historyStack.length === 0) {
+        updateNavButtonsState();
+        return;
+    }
+
+    const prevIdx = historyPointer > 0 ? historyPointer - 1 : null;
+    const currIdx = historyPointer;
+    const nextIdx = historyPointer < historyStack.length - 1 ? historyPointer + 1 : null;
+
+    const indices = [prevIdx, currIdx, nextIdx];
+
+    indices.forEach((hIdx, slotIndex) => {
+        const cardSlot = document.createElement('div');
+        cardSlot.className = 'card-slot';
+        if (slotIndex === 1) cardSlot.classList.add('active');
+
+        if (hIdx !== null && hIdx >= 0 && hIdx < historyStack.length) {
+            const dbIndex = historyStack[hIdx];
+            const item = anchorDatabase[dbIndex];
+            cardSlot.innerHTML = renderCardHTML(item);
+        } else {
+            cardSlot.innerHTML = '';
+        }
+
+        sliderTrack.appendChild(cardSlot);
+    });
+
+    sliderTrack.style.transition = 'none';
+    sliderTrack.style.transform = 'translateY(-100%)';
+
+    updateNavButtonsState();
+}
+
+function updateNavButtonsState() {
+    const btnPrev = document.getElementById('btnPrev');
+    if (btnPrev) {
+        btnPrev.disabled = (historyPointer <= 0);
+    }
+}
+
+// ==========================================
+// 6. 交互逻辑 (抽卡/前翻/后翻)
 // ==========================================
 function drawNewCard() {
     if (anchorDatabase.length === 0) return;
@@ -176,7 +223,6 @@ function drawNewCard() {
     renderSlider();
     playCardDrawSound();
 
-    // 核心修复：确保抽卡时卡片弹出显示
     const sliderContainer = document.getElementById('sliderContainer');
     if (sliderContainer) {
         sliderContainer.classList.add('visible');
@@ -202,7 +248,7 @@ function showNextCard() {
 }
 
 // ==========================================
-// 6. 触摸与手势滑动处理
+// 7. 触摸与手势滑动处理
 // ==========================================
 function setupGestureListeners() {
     const sliderContainer = document.getElementById('sliderContainer');
@@ -253,10 +299,9 @@ function setupGestureListeners() {
 }
 
 // ==========================================
-// 7. 语言、声音与主题控制
+// 8. 语言、声音与主题控制
 // ==========================================
 function setupControls() {
-    // 主题切换
     const themeToggle = document.getElementById('themeToggle');
     if (themeToggle) {
         themeToggle.addEventListener('click', () => {
@@ -267,7 +312,6 @@ function setupControls() {
         });
     }
 
-    // 声音开关
     const soundToggle = document.getElementById('soundToggle');
     const soundStatusText = document.getElementById('soundStatusText');
     if (soundToggle) {
@@ -280,7 +324,6 @@ function setupControls() {
         });
     }
 
-    // 语言切换
     const langToggle = document.getElementById('langToggle');
     if (langToggle) {
         langToggle.addEventListener('click', () => {
@@ -294,7 +337,6 @@ function setupControls() {
         });
     }
 
-    // 底部导航按钮
     const btnPrev = document.getElementById('btnPrev');
     const btnNext = document.getElementById('btnNext');
     const btnDraw = document.getElementById('btnDraw');
@@ -305,7 +347,7 @@ function setupControls() {
 }
 
 // ==========================================
-// 8. 页面初始化
+// 9. 页面初始化
 // ==========================================
 document.addEventListener('DOMContentLoaded', async () => {
     await loadQuotesData();
