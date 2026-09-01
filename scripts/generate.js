@@ -6,11 +6,12 @@ const { GoogleGenAI } = require('@google/genai');
 const ai = new GoogleGenAI();
 const JSON_PATH = path.join(__dirname, '../data/quotes.json');
 
-// 经官方标准确认的可用模型列表
+// 听 Google 官方报错的话，直接上 gemini-3.6-flash
 const CANDIDATE_MODELS = [
-    'gemini-2.5-flash',
-    'gemini-2.0-flash'
+    'gemini-3.6-flash',
+    'gemini-1.5-flash'
 ];
+
 
 const DAILY_PROMPT = `
 你是一个严谨的哲学、心理学与文学内容编辑。请生成 1 条用于心灵沉淀与生命思考的新内容（JSON 格式）。
