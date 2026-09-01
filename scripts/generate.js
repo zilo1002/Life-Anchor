@@ -8,8 +8,8 @@ const JSON_PATH = path.join(__dirname, '../data/quotes.json');
 
 // 根据最新的 API 提示配置可用模型
 const CANDIDATE_MODELS = [
-    'gemini-3.6-flash',
-    'gemini-3-flash'
+    'gemini-2.5-flash',
+    'gemini-1.5-flash'
 ];
 
 const DAILY_PROMPT = `
