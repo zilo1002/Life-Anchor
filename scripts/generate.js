@@ -2,14 +2,14 @@ const fs = require('fs');
 const path = require('path');
 const { GoogleGenAI } = require('@google/genai');
 
-// Automatically loads GEMINI_API_KEY from environment variables
+// 自动读取环境变量 GEMINI_API_KEY
 const ai = new GoogleGenAI();
 const JSON_PATH = path.join(__dirname, '../data/quotes.json');
 
-// Supported Gemini Flash model identifiers
+// 经官方标准确认的可用模型列表
 const CANDIDATE_MODELS = [
     'gemini-2.5-flash',
-    'gemini-1.5-flash'
+    'gemini-2.0-flash'
 ];
 
 const DAILY_PROMPT = `
@@ -55,7 +55,6 @@ async function generateWithFallback() {
                 }
             });
 
-            // Retrieve raw response text
             const rawText = response?.text || '';
             console.log(`🔍 模型 [${modelName}] 返回的内容:`, rawText);
 
@@ -80,7 +79,6 @@ async function main() {
     try {
         const newItem = await generateWithFallback();
         
-        // Compute new ID (e.g. base_501)
         const newIndex = quotes.length + 1;
         const newId = `base_${String(newIndex).padStart(3, '0')}`;
 
@@ -95,7 +93,6 @@ async function main() {
 
         quotes.push(formattedItem);
 
-        // Write updated data back to quotes.json
         const dir = path.dirname(JSON_PATH);
         if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
