@@ -17,8 +17,6 @@ let audioCtx = null;
 let startY = 0;
 let currentY = 0;
 let isDragging = false;
-let currentTranslate = 0;
-let prevTranslate = 0;
 
 // ==========================================
 // 2. 音效生成器 (Web Audio API 纯算法合成)
@@ -101,8 +99,8 @@ async function loadQuotesData() {
     } catch (err) {
         console.warn('加载 ./data/quotes.json 失败，降级使用内建数据:', err);
         anchorDatabase = [
-            { id: "a001", zh: "知道为什么而活的人，可以忍受任何一种生活。", sourceZh: "尼采" },
-            { id: "a002", zh: "有些事情，急着想明白，反而会离答案越来越远。", sourceZh: "村上春树" }
+            { id: "a001", zh: "知道为什么而活的人，可以忍受任何一种生活。", sourceZh: "尼采", en: "He who has a why to live for can bear almost any how.", sourceEn: "Friedrich Nietzsche" },
+            { id: "a002", zh: "有些事情，急着想明白，反而会离答案越来越远。", sourceZh: "村上春树", en: "Some things, if you try too hard to understand them, you will only get further from the answer.", sourceEn: "Haruki Murakami" }
         ];
     }
 }
@@ -174,7 +172,6 @@ function renderSlider() {
         return;
     }
 
-    // 已修复：去掉了 this.
     const prevIdx = historyPointer > 0 ? historyPointer - 1 : null;
     const currIdx = historyPointer;
     const nextIdx = historyPointer < historyStack.length - 1 ? historyPointer + 1 : null;
@@ -205,13 +202,8 @@ function renderSlider() {
 
 function updateNavButtonsState() {
     const btnPrev = document.getElementById('btnPrev');
-    const btnNext = document.getElementById('btnNext');
-
     if (btnPrev) {
         btnPrev.disabled = (historyPointer <= 0);
-    }
-    if (btnNext) {
-        btnNext.disabled = false;
     }
 }
 
@@ -227,6 +219,12 @@ function drawNewCard() {
 
     renderSlider();
     playCardDrawSound();
+
+    // 核心修复：确保抽卡时卡片弹出显示
+    const sliderContainer = document.getElementById('sliderContainer');
+    if (sliderContainer) {
+        sliderContainer.classList.add('visible');
+    }
 }
 
 function showPrevCard() {
@@ -299,18 +297,34 @@ function setupGestureListeners() {
 }
 
 // ==========================================
-// 7. 语言与声音控制
+// 7. 语言、声音与主题控制
 // ==========================================
 function setupControls() {
-    const soundToggle = document.getElementById('soundToggle');
-    if (soundToggle) {
-        soundToggle.addEventListener('click', () => {
-            soundEnabled = !soundEnabled;
-            soundToggle.classList.toggle('active', soundEnabled);
+    // 主题切换
+    const themeToggle = document.getElementById('themeToggle');
+    if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-theme');
+            const isDark = document.body.classList.contains('dark-theme');
+            document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
             playClickSound();
         });
     }
 
+    // 声音开关
+    const soundToggle = document.getElementById('soundToggle');
+    const soundStatusText = document.getElementById('soundStatusText');
+    if (soundToggle) {
+        soundToggle.addEventListener('click', () => {
+            soundEnabled = !soundEnabled;
+            if (soundStatusText) {
+                soundStatusText.textContent = soundEnabled ? '音效已开' : '音效已关';
+            }
+            playClickSound();
+        });
+    }
+
+    // 语言切换
     const langToggle = document.getElementById('langToggle');
     if (langToggle) {
         langToggle.addEventListener('click', () => {
@@ -324,6 +338,7 @@ function setupControls() {
         });
     }
 
+    // 底部导航按钮
     const btnPrev = document.getElementById('btnPrev');
     const btnNext = document.getElementById('btnNext');
     const btnDraw = document.getElementById('btnDraw');
@@ -341,6 +356,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     resetUnshownPool();
     setupGestureListeners();
     setupControls();
-
-    drawNewCard();
 });
