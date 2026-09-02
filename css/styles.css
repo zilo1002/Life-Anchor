@@ -684,7 +684,7 @@ body {
 }
 
 @media (max-width: 360px) {
-    .lang-selector { left: 100px; }
+    .lang-selector { left: 64px; }
 }
 
 @media (max-width: 360px) {
