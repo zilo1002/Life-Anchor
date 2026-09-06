@@ -3,6 +3,12 @@
 > 一个为迷失灵魂提供庇护的数字港湾。当用户按下按钮的那一刻，网站用温暖的方式告诉他们：「你并不孤单，这个世界需要你」。
 
 ---
+![HTML5](https://img.shields.io/badge/HTML5-E34F26?logo=html5&logoColor=white)
+![CSS3](https://img.shields.io/badge/CSS3-1572B6?logo=css3&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?logo=javascript&logoColor=black)
+![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-222222?logo=githubpages&logoColor=white)
+
+---
 
 ## 1. 功能亮点
 
