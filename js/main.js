@@ -332,7 +332,7 @@ function getCurrentContent() {
 }
 
 // DOM Elements
-let themeToggle, anchorButton, flashOverlay, messageCard, mainMessage, storySource, particlesContainer, soundBtn, soundMenu, soundLabel, navPrev, navNext, navPrevMobile, navNextMobile, langBtn, langMenu, langLabel;
+let themeToggle, anchorButton, flashOverlay, messageCard, mainMessage, storySource, particlesContainer, soundBtn, soundMenu, soundLabel, navPrev, navNext, navPrevMobile, navNextMobile, langBtn, langMenu;
 
 function initDOM() {
     themeToggle = document.getElementById('themeToggle');
@@ -351,7 +351,7 @@ function initDOM() {
     navNextMobile = document.getElementById('navNextMobile');
     langBtn = document.getElementById('langBtn');
     langMenu = document.getElementById('langMenu');
-    langLabel = document.getElementById('langLabel');
+    // langLabel 不再需要，因为我们移除了文字标签
 }
 
 function initTheme() {
@@ -366,7 +366,7 @@ function initSound() {
 }
 
 function initLanguage() {
-    langLabel.textContent = languageNames[state.language];
+    // 语言按钮现在只显示图标，不需要更新文字
     document.querySelectorAll('.lang-option').forEach(opt => {
         opt.classList.toggle('active', opt.dataset.lang === state.language);
     });
@@ -410,7 +410,6 @@ function setupLanguageMenu() {
     document.querySelectorAll('.lang-option').forEach(opt => {
         opt.addEventListener('click', () => {
             state.language = opt.dataset.lang;
-            langLabel.textContent = languageNames[state.language];
             localStorage.setItem('language', state.language);
             document.querySelectorAll('.lang-option').forEach(o => o.classList.remove('active'));
             opt.classList.add('active');
